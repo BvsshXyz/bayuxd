@@ -180,7 +180,12 @@ function print_install() {
     local content="  [~] ${trimmed}"
     printf "\e[1;36m│\e[1;33m %-50s \e[1;36m│\e[0m\n" "$content"
     echo -e "\e[1;36m└────────────────────────────────────────────────────┘\e[0m"
-    sleep 0.5
+    echo -ne "   \e[1;33mMemproses: \e[0m"
+    for i in {1..12}; do
+        echo -ne "\e[1;32m■\e[0m"
+        sleep 0.05
+    done
+    echo -e " \e[1;36m[OK]\e[0m"
 }
 function print_error() {
     echo -e "   \e[1;31m[✗] ERROR: $1\e[0m"
