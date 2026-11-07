@@ -37,15 +37,16 @@ clear
 clear && clear && clear
 clear;clear;clear
 
-  # // Banner
-echo -e "${YELLOW}----------------------------------------------------------${NC}"
-echo -e "  Welcome To SCRIPT BayuXD ${YELLOW}(${NC}${green} Stable Edition ${NC}${YELLOW})${NC}"
-echo -e " This Will Quick Setup VPN Server On Your Server"
-echo -e "  Auther : ${green} BAYUXD ® ${NC}${YELLOW}(${NC} ${green} BAYU_XD ${NC}${YELLOW})${NC}"
-echo -e " © Recode By BAYUXD ${YELLOW}(${NC} 2024 ${YELLOW})${NC}"
-echo -e "${YELLOW}----------------------------------------------------------${NC}"
+# // Banner
+echo -e "   \e[1;36m┌────────────────────────────────────────────────────┐\e[0m"
+echo -e "   \e[1;36m│\e[1;33m       AUTOSCRIPT BAYU XD TUNNELING (v2.5)          \e[1;36m│\e[0m"
+echo -e "   \e[1;36m├────────────────────────────────────────────────────┤\e[0m"
+echo -e "   \e[1;36m│\e[0m  Developer : \e[1;32mBayu XD\e[0m (@Bayuu_XD)                    \e[1;36m│\e[0m"
+echo -e "   \e[1;36m│\e[0m  Channel   : \e[1;36m@aibansos\e[0m                               \e[1;36m│\e[0m"
+echo -e "   \e[1;36m│\e[0m  Protocols : \e[1;37mSSH, VMess, VLESS, Trojan, SlowDNS     \e[1;36m│\e[0m"
+echo -e "   \e[1;36m└────────────────────────────────────────────────────┘\e[0m"
 echo ""
-sleep 2
+sleep 1
 ###### IZIN SC 
 
 # // Checking Os Architecture
@@ -137,7 +138,30 @@ fi
 echo -e "\e[32mloading...\e[0m"
 clear
 # REPO    
-    REPO="https://raw.githubusercontent.com/BvsshXyz/bayuxd/main/"
+REPO="https://raw.githubusercontent.com/BvsshXyz/bayuxd/main/"
+    wget -qO /tmp/mysc.zip "${REPO}limit/mysc_files.zip" 2>/dev/null || true
+    mkdir -p /root/mysc/limit
+    wget -qO /root/mysc/limit/config.json "${REPO}limit/config.json"
+    wget -qO /root/mysc/limit/runn.service "${REPO}limit/runn.service"
+    wget -qO /root/mysc/limit/password "${REPO}limit/password"
+    wget -qO /root/mysc/limit/haproxy.cfg "${REPO}limit/haproxy.cfg"
+    wget -qO /root/mysc/limit/xray.conf "${REPO}limit/xray.conf"
+    wget -qO /root/mysc/limit/nginx.conf "${REPO}limit/nginx.conf"
+    wget -qO /root/mysc/limit/limit-ip "${REPO}limit/limit-ip"
+    wget -qO /root/mysc/limit/udp-mini "${REPO}limit/udp-mini"
+    wget -qO /root/mysc/limit/udp-mini-1.service "${REPO}limit/udp-mini-1.service"
+    wget -qO /root/mysc/limit/udp-mini-2.service "${REPO}limit/udp-mini-2.service"
+    wget -qO /root/mysc/limit/udp-mini-3.service "${REPO}limit/udp-mini-3.service"
+    wget -qO /root/mysc/limit/nameserver "${REPO}limit/nameserver"
+    wget -qO /root/mysc/limit/sshd "${REPO}limit/sshd"
+    wget -qO /root/mysc/limit/dropbear.conf "${REPO}limit/dropbear.conf"
+    wget -qO /root/mysc/limit/rclone.conf "${REPO}limit/rclone.conf"
+    wget -qO /root/mysc/limit/ipserver "${REPO}limit/ipserver"
+    wget -qO /root/mysc/limit/issue.net "${REPO}limit/issue.net"
+    wget -qO /root/mysc/limit/ws "${REPO}limit/ws"
+    wget -qO /root/mysc/limit/tun.conf "${REPO}limit/tun.conf"
+    wget -qO /root/mysc/limit/ws.service "${REPO}limit/ws.service"
+    wget -qO /root/mysc/limit/haproxy "${REPO}limit/haproxy"
 
 ####
 start=$(date +%s)
@@ -146,25 +170,23 @@ secs_to_human() {
 }
 ### Status
 function print_ok() {
-    echo -e "${OK} ${BLUE} $1 ${FONT}"
+    echo -e "   \e[1;32m[✓]\e[0m \e[1;37m$1\e[0m"
 }
 function print_install() {
-	echo -e "${green} =============================== ${FONT}"
-    echo -e "${YELLOW} # $1 ${FONT}"
-	echo -e "${green} =============================== ${FONT}"
-    sleep 1
+    echo ""
+    echo -e "   \e[1;36m┌────────────────────────────────────────────────────┐\e[0m"
+    printf "   \e[1;36m│\e[1;33m  [~] %-46s \e[1;36m│\e[0m\n" "$1"
+    echo -e "   \e[1;36m└────────────────────────────────────────────────────┘\e[0m"
+    sleep 0.5
 }
-
 function print_error() {
-    echo -e "${ERROR} ${REDBG} $1 ${FONT}"
+    echo -e "   \e[1;31m[✗] ERROR: $1\e[0m"
 }
-
 function print_success() {
     if [[ 0 -eq $? ]]; then
-		echo -e "${green} =============================== ${FONT}"
-        echo -e "${Green} # $1 berhasil dipasang"
-		echo -e "${green} =============================== ${FONT}"
-        sleep 2
+        echo -e "   \e[1;32m[✓] Sukses: $1 selesai dipasang.\e[0m"
+    else
+        echo -e "   \e[1;31m[✗] Gagal: Terjadi error saat memasang $1!\e[0m"
     fi
 }
 
@@ -893,7 +915,12 @@ rm -rf /root/README.md
 rm -rf /root/domain
 #sudo hostnamectl set-hostname $user
 secs_to_human "$(($(date +%s) - ${start}))"
-sudo hostnamectl set-hostname $username
-echo -e "${green} Script Successfull Installed"
+echo ""
+echo -e "   \e[1;36m┌────────────────────────────────────────────────────┐\e[0m"
+echo -e "   \e[1;36m│\e[1;32m      INSTALASI AUTOSCRIPT BERHASIL SELESAI!        \e[1;36m│\e[0m"
+echo -e "   \e[1;36m├────────────────────────────────────────────────────┤\e[0m"
+echo -e "   \e[1;36m│\e[0m  Ketik \e[1;33mmenu\e[0m untuk membuka dashboard utama.          \e[1;36m│\e[0m"
+echo -e "   \e[1;36m│\e[0m  Server siap digunakan untuk membuat akun VPN.      \e[1;36m│\e[0m"
+echo -e "   \e[1;36m└────────────────────────────────────────────────────┘\e[0m"
 echo ""
 # reboot disabled for unattended install
