@@ -1,0 +1,90 @@
+#!/bin/bash
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+C_BORDER="\033[38;5;39m"
+C_TITLE="\033[1;38;5;51m"
+C_HEAD="\033[1;38;5;220m"
+C_TEXT="\033[38;5;253m"
+C_VAL="\033[1;38;5;255m"
+C_NUM="\033[1;38;5;51m"
+C_ON="\033[1;38;5;84m"
+C_OFF="\033[1;38;5;196m"
+NC="\033[0m"
+
+clear
+echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+echo -e "${C_BORDER}│${C_TITLE}             DELETE TROJAN ACCOUNT                  ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} Daftar Akun Trojan Aktif di Server:                ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+
+users=($(python3 -c "
+import json
+with open('/etc/xray/config.json') as f:
+    d = json.load(f)
+for ib in d.get('inbounds', []):
+    if ib.get('protocol') == 'trojan':
+        for c in ib.get('settings', {}).get('clients', []):
+            email = c.get('email', '')
+            if email and email != 'admin@trojan':
+                print(email)
+"))
+total_user=${#users[@]}
+
+if [ $total_user -eq 0 ]; then
+    printf "${C_BORDER}│${C_OFF} %-51s${C_BORDER}│${NC}\n" "[!] Tidak ada akun Trojan yang terdaftar."
+    echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+    echo ""
+    read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
+    m-trojan
+    exit 0
+fi
+
+for i in "${!users[@]}"; do
+    num=$((i + 1))
+    u="${users[$i]}"
+    exp=$(python3 /usr/local/bin/get_account_exp.py "$u" "trojan")
+    printf "${C_BORDER}│${C_TEXT} [${C_NUM}%02d${C_TEXT}] ${C_VAL}%-16s ${C_TEXT}Exp: ${C_ON}%-24s${C_BORDER}│${NC}\n" "$num" "$u" "$exp"
+done
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_OFF}00${C_TEXT}] Selesai dan Kembali ke Menu                   ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+echo ""
+
+while true; do
+    echo -ne "${C_TITLE}» Pilih Nomor Akun yang Mau Dihapus [1-$total_user]: ${C_VAL}"
+    read -r opt
+    
+    if [[ "$opt" == "0" || "$opt" == "00" ]]; then
+        echo -e "${C_OFF}[!] Kembali ke menu.${NC}"
+        sleep 1
+        m-trojan
+        exit 0
+    fi
+    
+    if [[ "$opt" =~ ^[0-9]+$ ]] && [ "$opt" -ge 1 ] && [ "$opt" -le "$total_user" ]; then
+        target_user="${users[$((opt - 1))]}"
+        break
+    else
+        echo -e "${C_OFF}[!] Nomor tidak valid! Masukkan angka antara 1 sampai ${total_user}.${NC}\n"
+    fi
+done
+
+python3 -c "
+import json
+with open('/etc/xray/config.json') as f:
+    d = json.load(f)
+for ib in d.get('inbounds', []):
+    if ib.get('protocol') == 'trojan':
+        ib['settings']['clients'] = [c for c in ib.get('settings', {}).get('clients', []) if c.get('email') != '$target_user']
+with open('/etc/xray/config.json', 'w') as f:
+    json.dump(d, f, indent=2)
+"
+sed -i "/#! $target_user /d" /etc/xray/config.json 2>/dev/null || true
+sed -i "/#! $target_user /d" /etc/trojan/.trojan.db 2>/dev/null || true
+rm -f "/etc/kyt/limit/trojan/ip/$target_user" "/etc/trojan/$target_user" "/etc/limit/trojan/$target_user" "/var/www/html/trojan-$target_user.txt"
+systemctl restart xray 2>/dev/null
+
+echo -e "\n${C_ON}[✓] Akun Trojan Nomor [$opt] ($target_user) berhasil dihapus total!${NC}"
+sleep 1.5
+deltr

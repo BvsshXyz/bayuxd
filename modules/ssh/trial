@@ -1,0 +1,74 @@
+#!/bin/bash
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+C_BORDER="\033[38;5;39m"
+C_TITLE="\033[1;38;5;51m"
+C_HEAD="\033[1;38;5;220m"
+C_TEXT="\033[38;5;253m"
+C_VAL="\033[1;38;5;255m"
+C_ON="\033[1;38;5;84m"
+C_GOLD="\033[1;38;5;214m"
+C_SUB="\033[38;5;246m"
+NC="\033[0m"
+
+print_boxed_content() {
+    local text="$1"
+    local chunk=""
+    while [ -n "$text" ]; do
+        chunk="${text:0:50}"
+        text="${text:50}"
+        printf "${C_BORDER}│${NC} ${C_SUB}%-50s${NC} ${C_BORDER}│${NC}\n" "$chunk"
+    done
+}
+
+
+clear
+Login="trial`cat /dev/urandom | tr -dc '0-9' | fold -w 4 | head -n 1`"
+Pass="1"
+iplimit=1
+domain=$(cat /etc/xray/domain 2>/dev/null || echo "vpn.bayuuvx.com")
+ip=$(cat /etc/xray/ipvps 2>/dev/null || echo "201.79.110.81")
+
+# Create user without fixed expiry date (managed by at daemon in 30 mins)
+useradd -s /bin/false -M "$Login" 2>/dev/null
+echo -e "$Pass\n$Pass" | passwd "$Login" &>/dev/null
+
+mkdir -p /etc/kyt/limit/ssh/ip /etc/ssh
+echo "1" > "/etc/kyt/limit/ssh/ip/$Login"
+
+# Auto kill & delete trial account after 30 minutes via at daemon
+exp_time=$(date -d "+30 minutes" +"%H:%M")
+exp_date=$(date -d "+30 minutes" +"%Y-%m-%d %H:%M")
+exp_show=$(date -d "+30 minutes" +"%d %b, %Y [%H:%M]")
+
+sed -i "/\\b${Login}\\b/d" /etc/ssh/.ssh.db 2>/dev/null || true
+echo "### ${Login} ${exp_date} 0 1" >> /etc/ssh/.ssh.db
+
+echo "userdel -f $Login 2>/dev/null; rm -f /etc/kyt/limit/ssh/ip/$Login; sed -i '/\\b${Login}\\b/d' /etc/ssh/.ssh.db" | at now + 30 minutes &>/dev/null
+
+payload="GET / HTTP/1.1[crlf]Host: ${domain}[crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf][crlf]"
+
+clear
+echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+echo -e "${C_BORDER}│${C_TITLE}             TRIAL SSH ACCOUNT CREATED              ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT} Username    : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "$Login"
+printf "${C_BORDER}│${C_TEXT} Password    : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "$Pass"
+printf "${C_BORDER}│${C_TEXT} Host / IP   : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "$ip"
+printf "${C_BORDER}│${C_TEXT} Domain      : ${C_TITLE}%-37s${C_BORDER}│${NC}\n" "$domain"
+printf "${C_BORDER}│${C_TEXT} Dropbear TLS: ${C_VAL}%-37s${C_BORDER}│${NC}\n" "443"
+printf "${C_BORDER}│${C_TEXT} Dropbear Dir: ${C_VAL}%-37s${C_BORDER}│${NC}\n" "109, 143"
+printf "${C_BORDER}│${C_TEXT} OpenSSH Port: ${C_VAL}%-37s${C_BORDER}│${NC}\n" "22, 22022"
+printf "${C_BORDER}│${C_TEXT} WS Non-TLS  : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "80, 8080"
+printf "${C_BORDER}│${C_TEXT} Limit IP    : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "1 Device (Trial)"
+printf "${C_BORDER}│${C_TEXT} Masa Aktif  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "30 Menit [$exp_time]"
+printf "${C_BORDER}│${C_TEXT} Expired On  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "$exp_show"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} PAYLOAD WEBSOCKET (HTTP / SOCKS):                  ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+print_boxed_content "$payload"
+echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+echo ""
+echo -ne "${C_TITLE}Tekan [ Enter ] untuk kembali ke menu...${NC}"
+read -r
+m-sshws

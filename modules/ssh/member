@@ -1,0 +1,63 @@
+#!/bin/bash
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+C_BORDER="\033[38;5;39m"
+C_TITLE="\033[1;38;5;51m"
+C_HEAD="\033[1;38;5;220m"
+C_TEXT="\033[38;5;253m"
+C_VAL="\033[1;38;5;255m"
+C_ON="\033[1;38;5;84m"
+C_OFF="\033[1;38;5;196m"
+NC="\033[0m"
+
+while true; do
+    clear 2>/dev/null || true
+    echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+    echo -e "${C_BORDER}│${C_TITLE}              LIST MEMBER SSH ACCOUNT               ${C_BORDER}│${NC}"
+    echo -e "${C_BORDER}├────────────────┬──────────────────────┬────────────┤${NC}"
+    echo -e "${C_BORDER}│${C_HEAD} USERNAME       ${C_BORDER}│${C_HEAD} EXPIRED ON           ${C_BORDER}│${C_HEAD} STATUS     ${C_BORDER}│${NC}"
+    echo -e "${C_BORDER}├────────────────┼──────────────────────┼────────────┤${NC}"
+
+    users=($(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd))
+    total_user=${#users[@]}
+
+    if [ "$total_user" -eq 0 ]; then
+        printf "${C_BORDER}│${C_OFF} %-50s ${C_BORDER}│${NC}\n" "Tidak ada akun SSH yang terdaftar di server."
+    else
+        for u in "${users[@]}"; do
+            exp=$(python3 /usr/local/bin/get_account_exp.py "$u" "ssh")
+            st=$(passwd -S "$u" 2>/dev/null | awk '{print $2}')
+            if [ "$st" = "L" ]; then
+                status_txt="LOCKED"
+                c_st="${C_OFF}"
+            else
+                status_txt="ACTIVE"
+                c_st="${C_ON}"
+            fi
+
+            printf "${C_BORDER}│${NC} ${C_VAL}%-14s${NC} ${C_BORDER}│${NC} ${C_TEXT}%-20s${NC} ${C_BORDER}│${NC} ${c_st}%-10s${NC} ${C_BORDER}│${NC}\n" "$u" "$exp" "$status_txt"
+        done
+    fi
+
+    echo -e "${C_BORDER}├────────────────┴──────────────────────┴────────────┤${NC}"
+    total_str="Total Akun SSH: $total_user User"
+    printf "${C_BORDER}│${C_HEAD} %-50s ${C_BORDER}│${NC}\n" "$total_str"
+    echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+    echo -e "${C_BORDER}│${C_TEXT} Tekan [${C_ON} Enter ${C_TEXT}] untuk Refresh                      ${C_BORDER}│${NC}"
+    echo -e "${C_BORDER}│${C_TEXT} Ketik [${C_OFF} x / 00 ${C_TEXT}] untuk Kembali ke Menu             ${C_BORDER}│${NC}"
+    echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+    echo ""
+
+    echo -ne "${C_TITLE}» Pilihan [Enter / x]: ${C_VAL}"
+    read -r action
+
+    case "$action" in
+        x|X|0|00|q|Q)
+            m-sshws
+            exit 0
+            ;;
+        *)
+            continue
+            ;;
+    esac
+done

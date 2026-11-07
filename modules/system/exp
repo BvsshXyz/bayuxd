@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# Ganti dengan token bot Telegram Anda
+TELEGRAM_BOT_TOKEN="7892524132:AAGXjxrMjCfEVMWpCXBUmtOBHVDKZmm1bbs"
+# Ganti dengan ID chat Telegram Anda
+TELEGRAM_CHAT_ID="6648546911"
+# Informasi kontak
+CONTACT_TELEGRAM="@Burhanssh"
+CONTACT_WHATSAPP="[Hubungi saya di WhatsApp](https://wa.me/6282140646468)"
+
+# Fungsi untuk mengirim pesan ke bot Telegram
+send_telegram_message() {
+    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+    -d chat_id="${TELEGRAM_CHAT_ID}" \
+    -d text="$1" \
+    -d parse_mode="HTML" > /dev/null
+}
+
+# Mendownload file izin dari URL yang diberikan
+download_permission_file() {
+    echo "Downloading permission file..."
+    curl -s -o "permission.txt" "$1" || { echo "Failed to download permission file."; exit 1; }
+    echo "Permission file downloaded successfully."
+}
+
+# Fungsi untuk memeriksa tanggal IP dan tanggal kedaluwarsa
+check_expiry_date() {
+    echo "Checking expiry date..."
+    content=$(cat "$1")
+
+    # Proses tanggal kedaluwarsa setelah mencetak isi file izin
+    while IFS= read -r line; do
+        if [[ "$line" == "###"* ]]; then
+            parts=($line)
+            username="${parts[1]}"
+            expiry_date_str="${parts[2]}"
+            ip="${parts[3]}"
+            current_date=$(date -u +"%Y-%m-%d")
+            expiry_date=$(date -d "$expiry_date_str" -u +"%Y-%m-%d")
+            if [[ "$current_date" > "$expiry_date" ]]; then
+                message="🕒 <b>Pemberitahuan:</b>
+┏━━━━━━━━━━━━━┓
+┃ Username: ${username}
+┃ Tanggal Exp: ${expiry_date_str}
+┃ IP: ${ip}
+┗━━━━━━━━━━━━━┛
+Status: Kedaluwarsa. Silakan hubungi untuk perpanjangan.Telegram: ${CONTACT_TELEGRAM}"
+                send_telegram_message "$message"
+                echo "Notification sent for user: $username"
+            fi
+        fi
+    done <<< "$content"
+}
+
+# Panggil fungsi untuk mendownload file izin dan memeriksanya
+download_permission_file "https://raw.githubusercontent.com/BayuXD-Tunnel/mysc/main/izin"
+check_expiry_date "permission.txt"
+
+# Hapus file setelah digunakan
+rm "permission.txt"
+
+# Konfigurasi cron untuk menjalankan skrip setiap jam 00.00
+echo "0 0 * * * $(readlink -f "$0")" | crontab -

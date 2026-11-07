@@ -1,0 +1,190 @@
+#!/bin/bash
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+C_BORDER="\033[38;5;39m"
+C_TITLE="\033[1;38;5;51m"
+C_HEAD="\033[1;38;5;220m"
+C_TEXT="\033[38;5;253m"
+C_VAL="\033[1;38;5;255m"
+C_ON="\033[1;38;5;84m"
+C_OFF="\033[1;38;5;196m"
+C_GOLD="\033[1;38;5;214m"
+C_SUB="\033[38;5;246m"
+NC="\033[0m"
+
+print_boxed_content() {
+    local text="$1"
+    local chunk=""
+    while [ -n "$text" ]; do
+        chunk="${text:0:50}"
+        text="${text:50}"
+        printf "${C_BORDER}│${NC} ${C_SUB}%-50s${NC} ${C_BORDER}│${NC}\n" "$chunk"
+    done
+}
+
+
+clear
+echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+echo -e "${C_BORDER}│${C_TITLE}              CREATE VLESS WS ACCOUNT               ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_SUB}         Xray-Core Multiport Tunneling v2.5         ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} Panduan Pengisian Form Input:                      ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} • Username    : Min 3 karakter (huruf/angka/_)      ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} • Masa Aktif  : Jumlah hari berlaku (contoh: 30)   ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} • Limit Quota : Batas kuota GB (ketik 0 = Unlimited)${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} • Limit IP    : Maks device login (ketik 0 = Bebas) ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+echo ""
+
+while true; do
+    echo -ne "${C_TITLE}» Input Username   : ${C_VAL}"
+    read -r user
+    if [[ -z "$user" ]]; then
+        echo -e "${C_OFF}[!] Username tidak boleh kosong!${NC}\n"
+        continue
+    fi
+    if [ ${#user} -lt 3 ]; then
+        echo -e "${C_OFF}[!] Username minimal 3 karakter!${NC}\n"
+        continue
+    fi
+    if ! [[ "$user" =~ ^[a-zA-Z0-9_]+$ ]]; then
+        echo -e "${C_OFF}[!] Hanya huruf, angka, dan underscore (_)!${NC}\n"
+        continue
+    fi
+    EXISTS=$(grep -w "$user" /etc/xray/config.json 2>/dev/null | wc -l)
+    if [[ "$EXISTS" -gt 0 ]]; then
+        echo -e "${C_OFF}[!] Akun '$user' sudah terdaftar, pilih nama lain!${NC}\n"
+        continue
+    fi
+    break
+done
+
+while true; do
+    echo -ne "${C_TITLE}» Masa Aktif (Hari): ${C_VAL}"
+    read -r masaaktif
+    [[ -z "$masaaktif" ]] && masaaktif=30
+    if [[ "$masaaktif" =~ ^[0-9]+$ ]] && [[ "$masaaktif" -gt 0 ]]; then
+        break
+    else
+        echo -e "${C_OFF}[!] Masukkan angka hari yang valid! (Default: 30)${NC}\n"
+    fi
+done
+
+while true; do
+    echo -ne "${C_TITLE}» Limit Kuota (GB) : ${C_VAL}"
+    read -r Quota
+    [[ -z "$Quota" ]] && Quota=0
+    if [[ "$Quota" =~ ^[0-9]+$ ]]; then
+        break
+    else
+        echo -e "${C_OFF}[!] Masukkan angka GB! (Ketik 0 untuk Unlimited)${NC}\n"
+    fi
+done
+
+while true; do
+    echo -ne "${C_TITLE}» Limit Login (IP) : ${C_VAL}"
+    read -r iplimit
+    [[ -z "$iplimit" ]] && iplimit=0
+    if [[ "$iplimit" =~ ^[0-9]+$ ]]; then
+        break
+    else
+        echo -e "${C_OFF}[!] Masukkan angka IP! (Ketik 0 untuk Bebas)${NC}\n"
+    fi
+done
+
+domain=$(cat /etc/xray/domain 2>/dev/null || echo "vpn.bayuuvx.com")
+uuid=$(cat /proc/sys/kernel/random/uuid)
+exp=$(date -d "$masaaktif days" +"%Y-%m-%d %H:%M")
+expe=$(date -d "$masaaktif days" +"%d %b, %Y [%H:%M]")
+
+python3 -c "
+import json
+with open('/etc/xray/config.json') as f:
+    d = json.load(f)
+for ib in d.get('inbounds', []):
+    if ib.get('protocol') == 'vless':
+        ib.setdefault('settings', {}).setdefault('clients', []).append({
+            'id': '$uuid',
+            'email': '$user',
+            'level': 0
+        })
+with open('/etc/xray/config.json', 'w') as f:
+    json.dump(d, f, indent=2)
+"
+
+sed -i "/\"email\": \"$user\"/i\\      #& $user $exp" /etc/xray/config.json 2>/dev/null || true
+
+mkdir -p /etc/kyt/limit/vless/ip /etc/kyt/limit/vless/quota /etc/vless /etc/limit/vless
+if [[ "$iplimit" -gt 0 ]]; then
+    echo "$iplimit" > "/etc/kyt/limit/vless/ip/$user"
+fi
+
+if [[ "$Quota" -gt 0 ]]; then
+    bytes=$((Quota * 1024 * 1024 * 1024))
+    echo "$bytes" > "/etc/vless/$user"
+    echo "$bytes" > "/etc/limit/vless/$user"
+fi
+
+echo "#& $user $exp $uuid $Quota $iplimit" >> /etc/vless/.vless.db
+systemctl restart xray 2>/dev/null
+
+vless_link_tls="vless://${uuid}@${domain}:443?path=/vless&security=tls&encryption=none&type=ws&sni=${domain}#${user}"
+vless_link_nontls="vless://${uuid}@${domain}:80?path=/vless&security=none&encryption=none&type=ws&host=${domain}#${user}"
+
+mkdir -p /var/www/html
+cat << EOF > "/var/www/html/vless-${user}.txt"
+====================================================
+           XRAY VLESS ACCOUNT INFORMATION
+====================================================
+Username     : ${user}
+Domain       : ${domain}
+Port TLS     : 443
+Port Non-TLS : 80, 8080
+UUID         : ${uuid}
+Encryption   : none
+Network      : WebSocket
+Path         : /vless
+Limit IP     : ${iplimit} Device
+Limit Quota  : ${Quota} GB
+Expired On   : ${expe}
+====================================================
+VLESS WS TLS (Port 443):
+${vless_link_tls}
+====================================================
+VLESS WS Non-TLS (Port 80):
+${vless_link_nontls}
+====================================================
+EOF
+
+clear
+echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+echo -e "${C_BORDER}│${C_TITLE}              VLESS ACCOUNT SUCCESS                 ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT} Username    : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "$user"
+printf "${C_BORDER}│${C_TEXT} Domain      : ${C_TITLE}%-37s${C_BORDER}│${NC}\n" "$domain"
+printf "${C_BORDER}│${C_TEXT} Port TLS    : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "443"
+printf "${C_BORDER}│${C_TEXT} Port Non-TLS: ${C_VAL}%-37s${C_BORDER}│${NC}\n" "80, 8080"
+printf "${C_BORDER}│${C_TEXT} UUID        : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "$uuid"
+printf "${C_BORDER}│${C_TEXT} Network     : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "WebSocket (/vless)"
+if [[ "$iplimit" -eq 0 ]]; then
+    printf "${C_BORDER}│${C_TEXT} Limit IP    : ${C_ON}%-37s${C_BORDER}│${NC}\n" "Unlimited Device"
+else
+    printf "${C_BORDER}│${C_TEXT} Limit IP    : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "$iplimit Device"
+fi
+if [[ "$Quota" -eq 0 ]]; then
+    printf "${C_BORDER}│${C_TEXT} Limit Kuota : ${C_ON}%-37s${C_BORDER}│${NC}\n" "Unlimited Kuota"
+else
+    printf "${C_BORDER}│${C_TEXT} Limit Kuota : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "$Quota GB"
+fi
+printf "${C_BORDER}│${C_TEXT} Masa Aktif  : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "$masaaktif Hari"
+printf "${C_BORDER}│${C_TEXT} Expired On  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "$expe"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} VLESS WS TLS (PORT 443):                           ${C_BORDER}│${NC}"
+echo -e "${C_SUB}${vless_link_tls}${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} VLESS WS NON-TLS (PORT 80):                        ${C_BORDER}│${NC}"
+echo -e "${C_SUB}${vless_link_nontls}${NC}"
+echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+echo ""
+read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
+menu

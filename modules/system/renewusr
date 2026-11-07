@@ -1,0 +1,122 @@
+#!/bin/bash
+
+
+type=$1
+
+user=$2
+masaaktif=$3
+iplimit=$4
+quota=$5
+
+function vmess() (
+if [[ -z ${quota} ]]; then
+quota=9999
+fi
+if [[ -z ${iplimit} ]]; then
+echo "9999" >> "/etc/kyt/limit/vmess/ip/${user}"
+fi
+
+exp=$(grep -wE "^### $user" "/etc/xray/config.json" | cut -d ' ' -f 3 | sort | uniq)
+
+c=$(echo "${quota}" | sed 's/[^0-9]*//g')
+d=$((${c} * 1024 * 1024 * 1024))
+
+if [[ ${c} != "0" ]]; then
+echo "${d}" > "/etc/vmess/${user}"
+fi
+
+now=$(date +%Y-%m-%d)
+d1=$(date -d "$exp" +%s)
+d2=$(date -d "$now" +%s)
+exp2=$(( (d1 - d2) / 86400 ))
+exp3=$(($exp2 + $masaaktif))
+exp4=$(date -d "$exp3 days" +"%Y-%m-%d")
+
+sed -i "/#& $user/c\#& $user $exp4" "/etc/xray/config.json"
+sed -i "/### $user/c\### $user $exp4" "/etc/vmess/.vmess.db"
+systemctl restart vmess > /dev/null 2>&1
+
+echo "Akun VMESS $user berhasil diperpanjang hingga $exp4"
+    echo " Client Name : $user"
+    echo " Expired On  : $exp4"
+    echo " User quota  : $quota"
+    echo " User Limit IP: $iplimit"
+)
+
+function vless() (
+if [[ -z ${quota} ]]; then
+quota=9999
+fi
+if [[ -z ${iplimit} ]]; then
+echo "9999" >> "/etc/kyt/limit/vless/ip/${user}"
+fi
+
+exp=$(grep -wE "^#& $user" "/etc/xray/config.json" | cut -d ' ' -f 3 | sort | uniq)
+
+c=$(echo "${quota}" | sed 's/[^0-9]*//g')
+d=$((${c} * 1024 * 1024 * 1024))
+
+if [[ ${c} != "0" ]]; then
+echo "${d}" > "/etc/vless/${user}"
+fi
+
+now=$(date +%Y-%m-%d)
+d1=$(date -d "$exp" +%s)
+d2=$(date -d "$now" +%s)
+exp2=$(( (d1 - d2) / 86400 ))
+exp3=$(($exp2 + $masaaktif))
+exp4=$(date -d "$exp3 days" +"%Y-%m-%d")
+
+sed -i "/#& $user/c\#& $user $exp4" "/etc/xray/config.json"
+sed -i "/### $user/c\### $user $exp4" "/etc/vless/.vless.db"
+systemctl restart vless > /dev/null 2>&1
+
+echo "Akun VLESS $user berhasil diperpanjang hingga $exp4"
+    echo " Client Name : $user"
+    echo " Expired On  : $exp4"
+    echo " User quota  : $quota"
+    echo " User Limit IP: $iplimit"
+)
+
+function trojan() (
+if [[ -z ${quota} ]]; then
+quota=9999
+fi
+if [[ -z ${iplimit} ]]; then
+echo "9999" >> "/etc/kyt/limit/trojan/ip/${user}"
+fi
+
+exp=$(grep -wE "^#! $user" "/etc/xray/config.json" | cut -d ' ' -f 3 | sort | uniq)
+
+c=$(echo "${quota}" | sed 's/[^0-9]*//g')
+d=$((${c} * 1024 * 1024 * 1024))
+
+if [[ ${c} != "0" ]]; then
+echo "${d}" > "/etc/trojan/${user}"
+fi
+
+now=$(date +%Y-%m-%d)
+d1=$(date -d "$exp" +%s)
+d2=$(date -d "$now" +%s)
+exp2=$(( (d1 - d2) / 86400 ))
+exp3=$(($exp2 + $masaaktif))
+exp4=$(date -d "$exp3 days" +"%Y-%m-%d")
+
+sed -i "/#! $user/c\#! $user $exp4" "/etc/xray/config.json"
+sed -i "/### $user/c\### $user $exp4" "/etc/trojan/.trojan.db"
+systemctl restart trojan > /dev/null 2>&1
+
+echo "Akun TROJAN $user berhasil diperpanjang hingga $exp4"
+    echo " Client Name : $user"
+    echo " Expired On  : $exp4"
+    echo " User quota  : $quota"
+    echo " User Limit IP: $iplimit"
+)
+
+if [[ ${type} == "vmess" ]]; then
+vmess
+elif [[ ${type} == "vless" ]]; then
+vless
+elif [[ ${type} == "trojan" ]]; then
+trojan
+fi

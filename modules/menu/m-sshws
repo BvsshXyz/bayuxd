@@ -1,0 +1,52 @@
+#!/bin/bash
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+C_BORDER="\033[38;5;39m"
+C_TITLE="\033[1;38;5;51m"
+C_SUB="\033[38;5;246m"
+C_HEAD="\033[1;38;5;220m"
+C_TEXT="\033[38;5;253m"
+C_VAL="\033[1;38;5;255m"
+C_NUM="\033[1;38;5;51m"
+NC="\033[0m"
+
+clear 2>/dev/null || true
+
+echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+echo -e "${C_BORDER}│${C_TITLE}              SSH & WEBSOCKET MANAGER               ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_SUB}         Dropbear / OpenSSH / WS Tunneling          ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD}                  AKUN MANAGEMENT                   ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├─────────────────────────┬──────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}01${C_TEXT}] Create Account     ${C_BORDER}│${C_TEXT} [${C_NUM}06${C_TEXT}] List Member User    ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}02${C_TEXT}] Create Trial Acc   ${C_BORDER}│${C_TEXT} [${C_NUM}07${C_TEXT}] List Expired User   ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}03${C_TEXT}] Renew / Perpanjang ${C_BORDER}│${C_TEXT} [${C_NUM}08${C_TEXT}] Lock Akun SSH       ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}04${C_TEXT}] Delete Account     ${C_BORDER}│${C_TEXT} [${C_NUM}09${C_TEXT}] Unlock Akun SSH     ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}05${C_TEXT}] Check Login User   ${C_BORDER}│${C_TEXT} [${C_NUM}10${C_TEXT}] Edit Limit IP User  ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├─────────────────────────┼──────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD}                  SISTEM & FITUR                    ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├─────────────────────────┬──────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}11${C_TEXT}] Check User Detail  ${C_BORDER}│${C_TEXT} [${C_NUM}12${C_TEXT}] Check Login UDP     ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├─────────────────────────┴──────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_HEAD}00${C_TEXT}] Kembali ke Menu Utama                         ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+echo ""
+echo -ne "${C_TITLE}» Select Option ${C_VAL}[00-12]${C_TITLE}: ${NC}"
+read -r opt
+
+case "$opt" in
+    1|01) addssh ;;
+    2|02) trial ;;
+    3|03) renewssh ;;
+    4|04) delssh ;;
+    5|05) ceklim ; m-sshws ;;
+    6|06) member ; m-sshws ;;
+    7|07) delexp ; m-sshws ;;
+    8|08) lock ; m-sshws ;;
+    9|09) unlock ; m-sshws ;;
+    10) ganti-ip ;;
+    11) user-ssh ; m-sshws ;;
+    12) cekudp ; m-sshws ;;
+    0|00|x|q) menu ;;
+    *) m-sshws ;;
+esac

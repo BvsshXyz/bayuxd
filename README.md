@@ -1,23 +1,57 @@
 # 🚀 BAYU XD TUNNELING AUTOSCRIPT (v2.5 Stable)
 
 > **All-In-One Multiport Tunneling VPN & Proxy Gateway for Ubuntu & Debian.**  
-> Crafted with precision, ultra-clean UI (54 Columns Mobile-Friendly), real-time multi-login enforcer, and automated quota/expired management.
+> Dikembangkan secara rapi, modern, mobile-friendly (UI 54-Kolom Termius), dengan penjadwalan expired akurat (WIB), dan proteksi multi-login otomatis.
+
+---
+
+## 📁 Struktur Direktori Repository
+
+Repository ini sudah disusun secara modular agar rapi, mudah dibaca, dan mudah dikembangkan:
+
+```text
+bayuxd/
+├── 📄 install.sh               # Script instalasi 1-klik utama
+├── 📄 premi.sh                 # Core engine installer full-stack
+├── 📄 update.sh                # Script update otomatis dari GitHub
+├── 📄 get_account_exp.py       # Engine python penghitung masa aktif & jam expired
+│
+├── 📂 modules/                 # Kumpulan skrip CLI per kategori protokol
+│   ├── 📁 ssh/                 # addssh, trial, renewssh, delssh, member, ceklim, lock, dll.
+│   ├── 📁 vmess/               # addws, trialws, renewws, delws, cekws, lock-vmess, dll.
+│   ├── 📁 vless/               # addvless, trialvless, renewvless, delvless, cekvless, dll.
+│   ├── 📁 trojan/              # addtr, trialtr, renewtr, deltr, cektr, lock-trojan, dll.
+│   ├── 📁 shadowsocks/         # addss, trialss, renewss, delss, cekss, user-ss
+│   ├── 📁 menu/                # menu, menu2, m-sshws, m-vmess, m-vless, m-trojan, running
+│   ├── 📁 backup/              # backup, restore, autobackup, menu-backup
+│   ├── 📁 bot/                 # bot, mbot, add-bot-panel, add-bot-notif, dll.
+│   └── 📁 system/              # speedtest, ram, about, reboot, clearcache, bbr, dll.
+│
+├── 📂 core/                    # Konfigurasi sistem & background service
+│   ├── 📁 configs/             # config.json (Xray), haproxy.cfg, nginx.conf, dropbear.conf
+│   ├── 📁 services/            # ws.service, autokill.service, runn.service, udp-mini.service
+│   ├── 📁 binaries/            # dnstt-server, dnstt-client, udp-mini, ftvpn
+│   └── 📁 scripts/             # ws.py (Python3 WS Proxy), xp (Auto-Delete Expired)
+│
+└── 📂 limit/                   # Arsip dependency deployment paket VPS
+    └── 📦 menu.zip             # Arsip sync otomatis untuk sbin VPS
+```
 
 ---
 
 ## ⚡ Fitur Unggulan (Core Highlights)
 
-- 📱 **Mobile-First Termius UI (54 Columns):** Tampilan rapi, simetris, dan anti-geser di semua layar smartphone.
-- 🕒 **Accurate Hourly Expiry:** Penghitungan masa aktif 24 jam presisi mengikuti jam & menit pembuatan akun (bukan cuma tebak tanggal).
-- ⏱️ **Auto-Kill Trial System:** Akun trial otomatis terhapus bersih setelah 30 menit (dilengkapi live countdown).
-- 🛡️ **Always-On Multi-Login Guard:** Proteksi multi-device login real-time (Dropbear & Xray Core) tanpa membebani CPU.
-- ⚡ **Multi-Protocol Support:**
+- 📱 **Mobile-First Termius UI (54 Columns):** Tampilan tabel rapi, simetris, dan anti-geser di semua layar smartphone.
+- 🕒 **Accurate Hourly Expiry:** Penghitungan masa aktif 24 jam presisi mengikuti jam & menit pembuatan akun (format waktu lokal WIB).
+- ⏱️ **Auto-Kill Trial System:** Akun trial otomatis terhapus bersih setelah 30 menit (dilengkapi estimasi jam mati).
+- 🛡️ **Always-On Multi-Login Guard:** Proteksi multi-device login real-time (Dropbear & Xray Core) tanpa membebani CPU / merestart service.
+- 🔢 **Numbered Selector Management:** Hapus & Perpanjang akun cukup ketik nomor urut `[01], [02]`, tanpa perlu ketik username manual.
+- ⚡ **Multiport Protocol Support:**
   - **SSH / WS:** OpenSSH, Dropbear TLS (443), WebSocket Python 3 Non-TLS (80, 8080).
   - **Xray VMess-WS:** Port 443 (TLS) & Port 80 (Non-TLS).
   - **Xray VLESS-WS:** Port 443 (TLS) & Port 80 (Non-TLS).
   - **Xray Trojan-WS:** Port 443 (TLS).
   - **SlowDNS / BadVPN UDPGW:** Port 7100, 7200, 7300.
-- 🔢 **Numbered Selector Management:** Hapus & Perpanjang akun cukup ketik nomor urut `[01], [02]`, tanpa perlu ketik username manual.
 
 ---
 

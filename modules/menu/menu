@@ -1,0 +1,124 @@
+#!/bin/bash
+# ========================================================
+#          BAYU XD TUNNELING OFFICIAL DASHBOARD
+#      PRECISION 54-COLUMN PRO GRID | 100% FIXED BUG
+# ========================================================
+
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# High-Contrast VIP Palette
+C_BORDER="\033[38;5;39m"     # Deep Sky Blue
+C_TITLE="\033[1;38;5;51m"    # Bright Cyan Bold
+C_SUB="\033[38;5;246m"       # Silver Gray
+C_HEAD="\033[1;38;5;220m"    # Warm Yellow Bold
+C_TEXT="\033[38;5;253m"      # Crisp Off-White
+C_VAL="\033[1;38;5;255m"     # Pure White Bold
+C_NUM="\033[1;38;5;51m"      # Neon Cyan
+C_ON="\033[1;38;5;84m"       # Vibrant Green
+C_OFF="\033[1;38;5;196m"     # Pure Red
+C_RED="\033[1;38;5;203m"     # Soft Red
+C_GOLD="\033[1;38;5;214m"    # Gold
+NC="\033[0m"
+
+# Fast IPC Service Checks
+chk() {
+    if systemctl is-active --quiet "$1" 2>/dev/null; then
+        echo -e "${C_ON}ON ${NC}"
+    else
+        echo -e "${C_OFF}OFF${NC}"
+    fi
+}
+
+S_SSH=$(chk ws)
+S_VMESS=$(chk xray)
+S_VLESS=$(chk xray)
+S_TROJAN=$(chk xray)
+
+# Hitung Total Akun Tiap Protokol Real-Time (FIX: Single Integer Output)
+TOTAL_SSH=$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd 2>/dev/null | wc -l)
+TOTAL_VMESS=$(grep -c -E "^### " "/etc/xray/config.json" 2>/dev/null) || TOTAL_VMESS=0
+TOTAL_VLESS=$(grep -c -E "^#& " "/etc/xray/config.json" 2>/dev/null) || TOTAL_VLESS=0
+TOTAL_TROJAN=$(grep -c -E "^#! " "/etc/xray/config.json" 2>/dev/null) || TOTAL_TROJAN=0
+
+# System Hardware & Identity
+DOMAIN=$(cat /etc/xray/domain 2>/dev/null || cat /root/domain 2>/dev/null || echo "vpn.bayuuvx.com")
+IP=$(cat /etc/xray/ipvps 2>/dev/null || cat /root/ipvps 2>/dev/null || echo "201.79.110.81")
+RAM_USED=$(free -m | awk '/Mem:/ {print $3}')
+RAM_TOTAL=$(free -m | awk '/Mem:/ {print $2}')
+RAM_STR="${RAM_USED}/${RAM_TOTAL}M"
+UPTIME=$(uptime -p 2>/dev/null | sed 's/up //; s/ hours\?/h/; s/ minutes\?/m/; s/ days\?/d/' | cut -d, -f1-2 || echo "1h")
+KERNEL=$(uname -r | cut -d- -f1-2)
+
+# License / Client Identity Info
+CLIENT_NAME="Bayu XD"
+EXP_DAYS="Lifetime (VIP)"
+STATUS_LIC="Active (HWID)"
+
+clear 2>/dev/null || true
+
+echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+echo -e "${C_BORDER}│${C_TITLE}              BAYU XD TUNNELING SYSTEM              ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_SUB}           Premium Multi-Protocol Gateway           ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD}                 SYSTEM INFORMATION                 ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├─────────────────────────┬──────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT} OS     : ${C_VAL}%-15s${C_BORDER}│${C_TEXT} Core   : ${C_VAL}%-16s${C_BORDER}│${NC}\n" "Ubuntu 24.04" "$KERNEL"
+printf "${C_BORDER}│${C_TEXT} RAM    : ${C_VAL}%-15s${C_BORDER}│${C_TEXT} Uptime : ${C_VAL}%-16s${C_BORDER}│${NC}\n" "$RAM_STR" "$UPTIME"
+printf "${C_BORDER}│${C_TEXT} IP VPS : ${C_VAL}%-15s${C_BORDER}│${C_TEXT} ISP    : ${C_VAL}%-16s${C_BORDER}│${NC}\n" "$IP" "DigitalOcean"
+printf "${C_BORDER}│${C_TEXT} Domain : ${C_TITLE}%-42s${C_BORDER}│${NC}\n" "$DOMAIN"
+echo -e "${C_BORDER}├─────────────────────────┼──────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD}     SERVICE STATUS      ${C_BORDER}│${C_HEAD}      TOTAL AKUN VPN      ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├─────────────────────────┼──────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT} SSH-WS    : [${S_SSH}${C_TEXT}]       ${C_BORDER}│${C_TEXT} SSH Account    : ${C_VAL}%-2s User${C_BORDER} │${NC}\n" "$TOTAL_SSH"
+printf "${C_BORDER}│${C_TEXT} VMess-WS  : [${S_VMESS}${C_TEXT}]       ${C_BORDER}│${C_TEXT} VMess Account  : ${C_VAL}%-2s User${C_BORDER} │${NC}\n" "$TOTAL_VMESS"
+printf "${C_BORDER}│${C_TEXT} VLESS-WS  : [${S_VLESS}${C_TEXT}]       ${C_BORDER}│${C_TEXT} VLESS Account  : ${C_VAL}%-2s User${C_BORDER} │${NC}\n" "$TOTAL_VLESS"
+printf "${C_BORDER}│${C_TEXT} Trojan-WS : [${S_TROJAN}${C_TEXT}]       ${C_BORDER}│${C_TEXT} Trojan Account : ${C_VAL}%-2s User${C_BORDER} │${NC}\n" "$TOTAL_TROJAN"
+echo -e "${C_BORDER}├─────────────────────────┴──────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD}                  MANAGEMENT MENU                   ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├─────────────────────────┬──────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}01${C_TEXT}] SSH & WS Menu      ${C_BORDER}│${C_TEXT} [${C_NUM}05${C_TEXT}] Speedtest VPS       ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}02${C_TEXT}] VMess Manager      ${C_BORDER}│${C_TEXT} [${C_NUM}06${C_TEXT}] Check Port          ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}03${C_TEXT}] VLESS Manager      ${C_BORDER}│${C_TEXT} [${C_NUM}07${C_TEXT}] Reboot Server       ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}04${C_TEXT}] Trojan Manager     ${C_BORDER}│${C_TEXT} [${C_NUM}08${C_TEXT}] Restart Service     ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├─────────────────────────┼──────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_HEAD}09${C_TEXT}] Renew SSL Cert     ${C_BORDER}│${C_TEXT} [${C_RED}00${C_TEXT}] Exit to Shell       ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├─────────────────────────┴──────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD}            CLIENT & LICENSE INFORMATION            ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├─────────────────────────┬──────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT} Client  : ${C_GOLD}%-14s${C_BORDER}│${C_TEXT} Expired : ${C_ON}%-15s${C_BORDER}│${NC}\n" "$CLIENT_NAME" "$EXP_DAYS"
+printf "${C_BORDER}│${C_TEXT} Status  : ${C_ON}%-14s${C_BORDER}│${C_TEXT} Version : ${C_VAL}%-15s${C_BORDER}│${NC}\n" "$STATUS_LIC" "v2.5 Stable"
+echo -e "${C_BORDER}└─────────────────────────┴──────────────────────────┘${NC}"
+echo ""
+echo -ne "${C_TITLE}» Select Option ${C_VAL}[00-09]${C_TITLE}: ${NC}"
+read -r opt
+
+case "$opt" in
+    1|01) m-sshws 2>/dev/null || menu ;;
+    2|02) m-vmess 2>/dev/null || menu ;;
+    3|03) m-vless 2>/dev/null || menu ;;
+    4|04) m-trojan 2>/dev/null || menu ;;
+    5|05) speedtest 2>/dev/null || menu ;;
+    6|06) netstat -tulpn | grep LISTEN || ss -tulpn ; read -rp "Tekan Enter..." ; menu ;;
+    7|07) reboot ;;
+    8|08) 
+        systemctl restart ws dropbear nginx haproxy xray 2>/dev/null
+        echo -e "\n${C_ON}Service berhasil di-restart!${NC}"
+        sleep 1
+        menu
+        ;;
+    9|09)
+        /root/.acme.sh/acme.sh --renew -d "$DOMAIN" --force 2>/dev/null || true
+        cat /etc/xray/xray.crt /etc/xray/xray.key > /etc/haproxy/hap.pem 2>/dev/null || true
+        systemctl restart haproxy 2>/dev/null || true
+        echo -e "\n${C_ON}SSL berhasil diperbarui!${NC}"
+        sleep 1
+        menu
+        ;;
+    0|00|x|q)
+        echo -e "\n${C_ON}Keluar ke terminal shell root.${NC}\n"
+        exit 0
+        ;;
+    *)
+        menu
+        ;;
+esac

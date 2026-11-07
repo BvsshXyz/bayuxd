@@ -1,0 +1,43 @@
+#!/bin/bash
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+C_BORDER="\033[38;5;39m"
+C_TITLE="\033[1;38;5;51m"
+C_SUB="\033[38;5;246m"
+C_HEAD="\033[1;38;5;220m"
+C_TEXT="\033[38;5;253m"
+C_VAL="\033[1;38;5;255m"
+C_NUM="\033[1;38;5;51m"
+NC="\033[0m"
+
+clear 2>/dev/null || true
+
+echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+echo -e "${C_BORDER}│${C_TITLE}             XRAY TROJAN MANAGER                    ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_SUB}         Xray-Core Multiport Tunneling v2.5         ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD}                  AKUN MANAGEMENT                   ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├─────────────────────────┬──────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}01${C_TEXT}] Create Account     ${C_BORDER}│${C_TEXT} [${C_NUM}05${C_TEXT}] Check Login User    ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}02${C_TEXT}] Create Trial Acc   ${C_BORDER}│${C_TEXT} [${C_NUM}06${C_TEXT}] Check Config Akun   ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}03${C_TEXT}] Renew / Perpanjang ${C_BORDER}│${C_TEXT} [${C_NUM}07${C_TEXT}] Edit Limit IP       ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}04${C_TEXT}] Delete Account     ${C_BORDER}│${C_TEXT} [${C_NUM}08${C_TEXT}] Edit Limit Quota    ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├─────────────────────────┴──────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_HEAD}00${C_TEXT}] Kembali ke Menu Utama                         ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+echo ""
+echo -ne "${C_TITLE}» Select Option ${C_VAL}[00-08]${C_TITLE}: ${NC}"
+read -r opt
+
+case "$opt" in
+    1|01) addtr ;;
+    2|02) trialtr ;;
+    3|03) renewtr ;;
+    4|04) deltr ;;
+    5|05) cektr ; read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali..."; m-trojan ;;
+    6|06) cat /var/www/html/trojan-*.txt 2>/dev/null || echo "Belum ada config tersimpan."; read -n 1 -s -r -p "Tekan [ Enter ]..."; m-trojan ;;
+    7|07) ganti-ip-trojan 2>/dev/null || m-trojan ;;
+    8|08) change-trojan-qouta 2>/dev/null || m-trojan ;;
+    0|00|9|09|x|q) menu ;;
+    *) m-trojan ;;
+esac

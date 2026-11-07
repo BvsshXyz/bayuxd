@@ -1,0 +1,139 @@
+#!/bin/bash
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+C_BORDER="\033[38;5;39m"
+C_TITLE="\033[1;38;5;51m"
+C_HEAD="\033[1;38;5;220m"
+C_TEXT="\033[38;5;253m"
+C_VAL="\033[1;38;5;255m"
+C_ON="\033[1;38;5;84m"
+C_OFF="\033[1;38;5;196m"
+C_GOLD="\033[1;38;5;214m"
+C_SUB="\033[38;5;246m"
+NC="\033[0m"
+
+print_boxed_content() {
+    local text="$1"
+    local chunk=""
+    while [ -n "$text" ]; do
+        chunk="${text:0:50}"
+        text="${text:50}"
+        printf "${C_BORDER}│${NC} ${C_SUB}%-50s${NC} ${C_BORDER}│${NC}\n" "$chunk"
+    done
+}
+
+
+clear
+echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+echo -e "${C_BORDER}│${C_TITLE}              CREATE SSH & WS ACCOUNT               ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_SUB}       Dropbear / OpenSSH / Python3 WS Proxy         ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} Panduan Pengisian Form Input:                      ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} • Username    : Min 3 karakter (huruf/angka/_)      ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} • Password    : Sandi login akun SSH                ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} • Masa Aktif  : Jumlah hari berlaku (contoh: 30)   ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} • Limit IP    : Maks multi-login (ketik 0 = Bebas)  ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+echo ""
+
+while true; do
+    echo -ne "${C_TITLE}» Input Username   : ${C_VAL}"
+    read -r Login
+    if [[ -z "$Login" ]]; then
+        echo -e "${C_OFF}[!] Username tidak boleh kosong!${NC}\n"
+        continue
+    fi
+    if [ ${#Login} -lt 3 ]; then
+        echo -e "${C_OFF}[!] Username minimal 3 karakter!${NC}\n"
+        continue
+    fi
+    if ! [[ "$Login" =~ ^[a-zA-Z0-9_]+$ ]]; then
+        echo -e "${C_OFF}[!] Hanya huruf, angka, dan underscore (_)!${NC}\n"
+        continue
+    fi
+    if awk -F: '{print $1}' /etc/passwd | grep -qx "$Login"; then
+        echo -e "${C_OFF}[!] Akun '$Login' sudah terdaftar di sistem!${NC}\n"
+        continue
+    fi
+    break
+done
+
+while true; do
+    echo -ne "${C_TITLE}» Input Password   : ${C_VAL}"
+    read -r Pass
+    if [[ -z "$Pass" ]]; then
+        echo -e "${C_OFF}[!] Password tidak boleh kosong!${NC}\n"
+        continue
+    fi
+    break
+done
+
+while true; do
+    echo -ne "${C_TITLE}» Masa Aktif (Hari): ${C_VAL}"
+    read -r masaaktif
+    [[ -z "$masaaktif" ]] && masaaktif=30
+    if [[ "$masaaktif" =~ ^[0-9]+$ ]] && [[ "$masaaktif" -gt 0 ]]; then
+        break
+    else
+        echo -e "${C_OFF}[!] Masukkan angka hari yang valid! (Default: 30)${NC}\n"
+    fi
+done
+
+while true; do
+    echo -ne "${C_TITLE}» Limit Login (IP) : ${C_VAL}"
+    read -r iplimit
+    [[ -z "$iplimit" ]] && iplimit=0
+    if [[ "$iplimit" =~ ^[0-9]+$ ]]; then
+        break
+    else
+        echo -e "${C_OFF}[!] Masukkan angka IP! (Ketik 0 untuk Bebas)${NC}\n"
+    fi
+done
+
+domain=$(cat /etc/xray/domain 2>/dev/null || echo "vpn.bayuuvx.com")
+ip=$(cat /etc/xray/ipvps 2>/dev/null || echo "201.79.110.81")
+expe=$(date -d "$masaaktif days" +"%d %b, %Y [%H:%M]")
+exp_date=$(date -d "$masaaktif days" +"%Y-%m-%d %H:%M")
+exp_chage=$(date -d "$masaaktif days + 1 day" +"%Y-%m-%d")
+
+useradd -e "$exp_chage" -s /bin/false -M "$Login" 2>/dev/null
+echo -e "$Pass\n$Pass" | passwd "$Login" &>/dev/null
+
+mkdir -p /etc/kyt/limit/ssh/ip /etc/ssh
+if [[ "$iplimit" -gt 0 ]]; then
+    echo "$iplimit" > "/etc/kyt/limit/ssh/ip/$Login"
+fi
+
+sed -i "/\\b${Login}\\b/d" /etc/ssh/.ssh.db 2>/dev/null || true
+echo "### ${Login} ${exp_date} ${Pass} ${iplimit}" >> /etc/ssh/.ssh.db
+
+payload="GET / HTTP/1.1[crlf]Host: ${domain}[crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf][crlf]"
+
+clear
+echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+echo -e "${C_BORDER}│${C_TITLE}               SSH ACCOUNT SUCCESS                  ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT} Username    : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "$Login"
+printf "${C_BORDER}│${C_TEXT} Password    : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "$Pass"
+printf "${C_BORDER}│${C_TEXT} Host / IP   : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "$ip"
+printf "${C_BORDER}│${C_TEXT} Domain      : ${C_TITLE}%-37s${C_BORDER}│${NC}\n" "$domain"
+printf "${C_BORDER}│${C_TEXT} Dropbear TLS: ${C_VAL}%-37s${C_BORDER}│${NC}\n" "443"
+printf "${C_BORDER}│${C_TEXT} Dropbear Dir: ${C_VAL}%-37s${C_BORDER}│${NC}\n" "109, 143"
+printf "${C_BORDER}│${C_TEXT} OpenSSH Port: ${C_VAL}%-37s${C_BORDER}│${NC}\n" "22, 22022"
+printf "${C_BORDER}│${C_TEXT} WS Non-TLS  : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "80, 8080"
+if [[ "$iplimit" -eq 0 ]]; then
+    printf "${C_BORDER}│${C_TEXT} Limit IP    : ${C_ON}%-37s${C_BORDER}│${NC}\n" "Unlimited Device"
+else
+    printf "${C_BORDER}│${C_TEXT} Limit IP    : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "$iplimit Device"
+fi
+printf "${C_BORDER}│${C_TEXT} Masa Aktif  : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "$masaaktif Hari"
+printf "${C_BORDER}│${C_TEXT} Expired On  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "$expe"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} PAYLOAD WEBSOCKET (HTTP / SOCKS):                  ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+print_boxed_content "$payload"
+echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+echo ""
+echo -ne "${C_TITLE}Tekan [ Enter ] untuk kembali ke menu...${NC}"
+read -r
+m-sshws

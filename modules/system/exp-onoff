@@ -1,0 +1,68 @@
+#!/bin/bash
+
+g="\e[92;1m"
+RED="\033[31m"
+NC='\033[0m'
+y='\033[1;93m'
+
+EXP_SCRIPT="/usr/local/sbin/exp"
+CRON_FILE="/etc/cron.d/exp"
+
+check_cron_status() {
+    if [ -e "$CRON_FILE" ]; then
+        echo -e "Status Cron: ${g}Aktif${NC}"
+    else
+        echo -e "Status Cron: ${RED}Tidak Aktif${NC}"
+    fi
+}
+
+start_cron() {
+    # Membuat isi tugas cron
+    CRON_ENTRY="0 0 * * * root $EXP_SCRIPT"
+
+    # Menambahkan atau memperbarui tugas cron
+    echo -e "SHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n$CRON_ENTRY" | tee "$CRON_FILE" > /dev/null
+
+    # Pastikan izin file dan tugas cron
+    chmod +x "$EXP_SCRIPT"
+    chmod 644 "$CRON_FILE"
+
+    # Menampilkan isi dari /etc/cron.d/exp
+    echo -e "Isi dari $CRON_FILE:"
+    cat "$CRON_FILE"
+
+    echo -e "Cron ${g}diaktifkan${NC} dengan jadwal setiap hari pukul 00.00."
+}
+
+stop_cron() {
+    rm -f "$CRON_FILE"
+    echo -e "Cron ${RED}dinonaktifkan${NC}."
+}
+
+PS3="Pilih fungsi (1-4): "
+options=("Start Cron" "Stop Cron" "Check Status Cron" "Keluar")
+
+echo -e "${y}Status Menu:${NC}"
+check_cron_status
+echo -e "\n${y}Menu:${NC}"
+select opt in "${options[@]}"; do
+    case $REPLY in
+        1)
+            start_cron
+            ;;
+        2)
+            stop_cron
+            ;;
+        3)
+            check_cron_status
+            ;;
+        4)
+            echo "Keluar."
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Pilihan tidak valid.${NC}"
+            ;;
+    esac
+    echo ""
+done

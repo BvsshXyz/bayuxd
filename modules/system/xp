@@ -1,0 +1,113 @@
+#!/bin/bash
+# ========================================================
+#       BAYU XD TUNNELING - PRECISION EXPIRED CLEANER
+#   Auto-Remove Expired Accounts Daily at 23:59 / Midnight
+# ========================================================
+
+clear
+now_epoch=$(date +%s)
+
+# 1. AUTO REMOVE VMESS
+if [ -f "/etc/xray/config.json" ]; then
+    data_vmess=($(grep '^### ' /etc/xray/config.json 2>/dev/null | awk '{print $2}' | sort -u))
+    for u in "${data_vmess[@]}"; do
+        [ -z "$u" ] && continue
+        exp=$(grep -w "^### $u" /etc/vmess/.vmess.db 2>/dev/null | awk '{print $3, $4}' | head -n1)
+        if [ -n "$exp" ]; then
+            exp_epoch=$(python3 -c "
+import datetime
+try:
+    print(int(datetime.datetime.strptime('$exp', '%Y-%m-%d %H:%M').timestamp()))
+except Exception:
+    try:
+        print(int(datetime.datetime.strptime('$exp', '%Y-%m-%d').timestamp()) + 86399)
+    except Exception:
+        print(0)
+")
+            if [ "$now_epoch" -ge "$exp_epoch" ] && [ "$exp_epoch" -gt 0 ]; then
+                sed -i "/^### $u /,/^},{/d" /etc/xray/config.json 2>/dev/null
+                sed -i "/### $u /d" /etc/vmess/.vmess.db 2>/dev/null
+                rm -f "/etc/kyt/limit/vmess/ip/$u" "/etc/vmess/$u" "/etc/limit/vmess/$u" "/var/www/html/vmess-$u.txt"
+            fi
+        fi
+    done
+fi
+
+# 2. AUTO REMOVE VLESS
+if [ -f "/etc/xray/config.json" ]; then
+    data_vless=($(grep '^#& ' /etc/xray/config.json 2>/dev/null | awk '{print $2}' | sort -u))
+    for u in "${data_vless[@]}"; do
+        [ -z "$u" ] && continue
+        exp=$(grep -w "^#& $u" /etc/vless/.vless.db 2>/dev/null | awk '{print $3, $4}' | head -n1)
+        if [ -n "$exp" ]; then
+            exp_epoch=$(python3 -c "
+import datetime
+try:
+    print(int(datetime.datetime.strptime('$exp', '%Y-%m-%d %H:%M').timestamp()))
+except Exception:
+    try:
+        print(int(datetime.datetime.strptime('$exp', '%Y-%m-%d').timestamp()) + 86399)
+    except Exception:
+        print(0)
+")
+            if [ "$now_epoch" -ge "$exp_epoch" ] && [ "$exp_epoch" -gt 0 ]; then
+                sed -i "/^#& $u /,/^},{/d" /etc/xray/config.json 2>/dev/null
+                sed -i "/#& $u /d" /etc/vless/.vless.db 2>/dev/null
+                rm -f "/etc/kyt/limit/vless/ip/$u" "/etc/vless/$u" "/etc/limit/vless/$u" "/var/www/html/vless-$u.txt"
+            fi
+        fi
+    done
+fi
+
+# 3. AUTO REMOVE TROJAN
+if [ -f "/etc/xray/config.json" ]; then
+    data_tr=($(grep '^#! ' /etc/xray/config.json 2>/dev/null | awk '{print $2}' | sort -u))
+    for u in "${data_tr[@]}"; do
+        [ -z "$u" ] && continue
+        exp=$(grep -w "^#! $u" /etc/trojan/.trojan.db 2>/dev/null | awk '{print $3, $4}' | head -n1)
+        if [ -n "$exp" ]; then
+            exp_epoch=$(python3 -c "
+import datetime
+try:
+    print(int(datetime.datetime.strptime('$exp', '%Y-%m-%d %H:%M').timestamp()))
+except Exception:
+    try:
+        print(int(datetime.datetime.strptime('$exp', '%Y-%m-%d').timestamp()) + 86399)
+    except Exception:
+        print(0)
+")
+            if [ "$now_epoch" -ge "$exp_epoch" ] && [ "$exp_epoch" -gt 0 ]; then
+                sed -i "/^#! $u /,/^},{/d" /etc/xray/config.json 2>/dev/null
+                sed -i "/#! $u /d" /etc/trojan/.trojan.db 2>/dev/null
+                rm -f "/etc/kyt/limit/trojan/ip/$u" "/etc/trojan/$u" "/etc/limit/trojan/$u" "/var/www/html/trojan-$u.txt"
+            fi
+        fi
+    done
+fi
+systemctl restart xray 2>/dev/null
+
+# 4. AUTO REMOVE SSH
+users_ssh=($(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd))
+for u in "${users_ssh[@]}"; do
+    if [[ "$u" =~ ^trial ]]; then
+        continue
+    fi
+    exp_raw=$(grep -wE "^#ssh# $u" /etc/ssh/.ssh.db 2>/dev/null | awk '{print $3, $4}')
+    if [ -n "$exp_raw" ]; then
+        exp_epoch=$(python3 -c "
+import datetime
+try:
+    print(int(datetime.datetime.strptime('$exp_raw', '%Y-%m-%d %H:%M').timestamp()))
+except Exception:
+    try:
+        print(int(datetime.datetime.strptime('$exp_raw', '%Y-%m-%d').timestamp()) + 86399)
+    except Exception:
+        print(0)
+")
+        if [ "$now_epoch" -ge "$exp_epoch" ] && [ "$exp_epoch" -gt 0 ]; then
+            userdel -f -r "$u" 2>/dev/null || userdel -f "$u" 2>/dev/null
+            sed -i "/\\b${u}\\b/d" /etc/ssh/.ssh.db 2>/dev/null
+            rm -f "/etc/kyt/limit/ssh/ip/$u" "/var/www/html/ssh-$u.txt"
+        fi
+    fi
+done

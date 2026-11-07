@@ -1,0 +1,80 @@
+#!/bin/bash
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+C_BORDER="\033[38;5;39m"
+C_TITLE="\033[1;38;5;51m"
+C_HEAD="\033[1;38;5;220m"
+C_TEXT="\033[38;5;253m"
+C_VAL="\033[1;38;5;255m"
+C_ON="\033[1;38;5;84m"
+C_GOLD="\033[1;38;5;214m"
+C_SUB="\033[38;5;246m"
+NC="\033[0m"
+
+print_boxed_content() {
+    local text="$1"
+    local chunk=""
+    while [ -n "$text" ]; do
+        chunk="${text:0:50}"
+        text="${text:50}"
+        printf "${C_BORDER}│${NC} ${C_SUB}%-50s${NC} ${C_BORDER}│${NC}\n" "$chunk"
+    done
+}
+
+
+clear
+user="trial`cat /dev/urandom | tr -dc '0-9' | fold -w 4 | head -n 1`"
+domain=$(cat /etc/xray/domain 2>/dev/null || echo "vpn.bayuuvx.com")
+uuid=$(cat /proc/sys/kernel/random/uuid)
+
+python3 -c "
+import json
+with open('/etc/xray/config.json') as f:
+    d = json.load(f)
+for ib in d.get('inbounds', []):
+    if ib.get('protocol') == 'vless':
+        ib.setdefault('settings', {}).setdefault('clients', []).append({
+            'id': '$uuid',
+            'email': '$user',
+            'level': 0
+        })
+with open('/etc/xray/config.json', 'w') as f:
+    json.dump(d, f, indent=2)
+"
+
+exp_time=$(date -d "+30 minutes" +"%H:%M")
+exp_date=$(date -d "+30 minutes" +"%Y-%m-%d %H:%M")
+exp_show=$(date -d "+30 minutes" +"%d %b, %Y [%H:%M]")
+
+sed -i "/\"email\": \"$user\"/i\\      #& $user $exp_date" /etc/xray/config.json 2>/dev/null || true
+mkdir -p /etc/kyt/limit/vless/ip /etc/vless
+echo "1" > "/etc/kyt/limit/vless/ip/$user"
+echo "#& $user $exp_date $uuid 0 1" >> /etc/vless/.vless.db
+systemctl restart xray 2>/dev/null
+
+at_del="python3 -c \"import json; f='/etc/xray/config.json'; d=json.load(open(f)); [ib['settings'].__setitem__('clients', [c for c in ib.get('settings',{}).get('clients',[]) if c.get('email')!='$user']) for ib in d.get('inbounds',[]) if ib.get('protocol')=='vless']; json.dump(d, open(f,'w'), indent=2)\"; sed -i '/#& $user /d' /etc/xray/config.json; sed -i '/#& $user /d' /etc/vless/.vless.db; rm -f /etc/kyt/limit/vless/ip/$user; systemctl restart xray"
+echo "$at_del" | at now + 30 minutes &>/dev/null
+
+vless_link_tls="vless://${uuid}@${domain}:443?path=/vless&security=tls&encryption=none&type=ws&sni=${domain}#${user}"
+
+clear
+echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+echo -e "${C_BORDER}│${C_TITLE}            TRIAL VLESS ACCOUNT CREATED             ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT} Username    : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "$user"
+printf "${C_BORDER}│${C_TEXT} Domain      : ${C_TITLE}%-37s${C_BORDER}│${NC}\n" "$domain"
+printf "${C_BORDER}│${C_TEXT} Port TLS    : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "443"
+printf "${C_BORDER}│${C_TEXT} UUID        : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "$uuid"
+printf "${C_BORDER}│${C_TEXT} Network     : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "WebSocket (/vless)"
+printf "${C_BORDER}│${C_TEXT} Limit IP    : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "1 Device (Trial)"
+printf "${C_BORDER}│${C_TEXT} Masa Aktif  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "30 Menit [$exp_time]"
+printf "${C_BORDER}│${C_TEXT} Expired On  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "$exp_show"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} VLESS WS TLS (PORT 443):                           ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+print_boxed_content "$vless_link_tls"
+echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+echo ""
+echo -ne "${C_TITLE}Tekan [ Enter ] untuk kembali ke menu...${NC}"
+read -r
+m-vless
