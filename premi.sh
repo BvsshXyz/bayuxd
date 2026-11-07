@@ -607,17 +607,17 @@ print_install "Memasang Backup Server"
 #BackupOption
 apt install rclone -y
 printf "q\n" | rclone config
-cp -f /root/mysc/limit/rclone.conf /root/.config/rclone/rclone.conf
-#Install Wondershaper
-cd /bin
-git clone  https://github.com/magnific0/wondershaper.git
-cd wondershaper
-sudo make install
-cd
-rm -rf wondershaper
-echo > /home/limit
-apt install msmtp-mta ca-certificates bsd-mailx -y
-cat<<EOF>>/etc/msmtprc
+    [ -f /root/mysc/limit/rclone.conf ] && cp -f /root/mysc/limit/rclone.conf /root/.config/rclone/rclone.conf 2>/dev/null || true
+    #Install Wondershaper
+    rm -rf /bin/wondershaper
+    cd /bin
+    git clone https://github.com/magnific0/wondershaper.git 2>/dev/null || true
+    cd wondershaper 2>/dev/null && make install >/dev/null 2>&1 || true
+    cd /root
+    rm -rf /bin/wondershaper
+    echo > /home/limit
+    apt install msmtp-mta ca-certificates bsd-mailx -y >/dev/null 2>&1
+    cat<<EOF>>/etc/msmtprc
 defaults
 tls on
 tls_starttls on
@@ -632,9 +632,9 @@ from oceantestdigital@gmail.com
 password jokerman77 
 logfile ~/.msmtp.log
 EOF
-chown -R www-data:www-data /etc/msmtprc
-cp -f /root/mysc/limit/ipserver /etc/ipserver && bash /etc/ipserver
-print_success "Backup Server"
+    chown -R www-data:www-data /etc/msmtprc 2>/dev/null || true
+    [ -f /root/mysc/limit/ipserver ] && cp -f /root/mysc/limit/ipserver /etc/ipserver && bash /etc/ipserver 2>/dev/null || true
+    print_success "Backup Server"
 }
 
 clear
@@ -646,13 +646,17 @@ gotop_latest="$(curl -s https://api.github.com/repos/xxxserxxx/gotop/releases | 
     curl -sL "$gotop_link" -o /tmp/gotop.deb
     dpkg -i /tmp/gotop.deb >/dev/null 2>&1
     
-        # > Buat swap sebesar 1G
-    dd if=/dev/zero of=/swapfile bs=1024 count=1048576
-    mkswap /swapfile
-    chown root:root /swapfile
-    chmod 0600 /swapfile >/dev/null 2>&1
-    swapon /swapfile >/dev/null 2>&1
-    sed -i '$ i\/swapfile      swap swap   defaults    0 0' /etc/fstab
+    # > Buat swap sebesar 1G (jika belum ada)
+    got_swap=$(free -m | awk '/Swap/{print $2}')
+    if [ "$got_swap" -lt 500 ]; then
+        dd if=/dev/zero of=/swapfile bs=1024 count=1048576 status=none 2>/dev/null || true
+        mkswap /swapfile >/dev/null 2>&1 || true
+        chown root:root /swapfile 2>/dev/null || true
+        chmod 0600 /swapfile >/dev/null 2>&1 || true
+        swapon /swapfile >/dev/null 2>&1 || true
+        sed -i '/\/swapfile/d' /etc/fstab 2>/dev/null || true
+        echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+    fi
 
     # > Singkronisasi jam
     chronyd -q 'server 0.id.pool.ntp.org iburst'
@@ -672,12 +676,8 @@ print_install "Menginstall Fail2ban"
 #/etc/init.d/fail2ban status
 
 # Instal DDOS Flate
-if [ -d '/usr/local/ddos' ]; then
-	echo; echo; echo "Please un-install the previous version first"
-	exit 0
-else
-	mkdir /usr/local/ddos
-fi
+rm -rf /usr/local/ddos
+mkdir -p /usr/local/ddos
 
 clear
 # banner
@@ -889,6 +889,29 @@ print_install "Enable Service"
 # Fingsi Install Script
 function instal(){
 clear
+    mkdir -p /root/mysc/limit
+    wget -qO /root/mysc/limit/config.json "${REPO}limit/config.json"
+    wget -qO /root/mysc/limit/runn.service "${REPO}limit/runn.service"
+    wget -qO /root/mysc/limit/password "${REPO}limit/password"
+    wget -qO /root/mysc/limit/haproxy.cfg "${REPO}limit/haproxy.cfg"
+    wget -qO /root/mysc/limit/xray.conf "${REPO}limit/xray.conf"
+    wget -qO /root/mysc/limit/nginx.conf "${REPO}limit/nginx.conf"
+    wget -qO /root/mysc/limit/limit-ip "${REPO}limit/limit-ip"
+    wget -qO /root/mysc/limit/udp-mini "${REPO}limit/udp-mini"
+    wget -qO /root/mysc/limit/udp-mini-1.service "${REPO}limit/udp-mini-1.service"
+    wget -qO /root/mysc/limit/udp-mini-2.service "${REPO}limit/udp-mini-2.service"
+    wget -qO /root/mysc/limit/udp-mini-3.service "${REPO}limit/udp-mini-3.service"
+    wget -qO /root/mysc/limit/nameserver "${REPO}limit/nameserver"
+    wget -qO /root/mysc/limit/sshd "${REPO}limit/sshd"
+    wget -qO /root/mysc/limit/dropbear.conf "${REPO}limit/dropbear.conf"
+    wget -qO /root/mysc/limit/rclone.conf "${REPO}limit/rclone.conf"
+    wget -qO /root/mysc/limit/ipserver "${REPO}limit/ipserver"
+    wget -qO /root/mysc/limit/issue.net "${REPO}limit/issue.net"
+    wget -qO /root/mysc/limit/ws "${REPO}limit/ws"
+    wget -qO /root/mysc/limit/tun.conf "${REPO}limit/tun.conf"
+    wget -qO /root/mysc/limit/ws.service "${REPO}limit/ws.service"
+    wget -qO /root/mysc/limit/haproxy "${REPO}limit/haproxy"
+
     first_setup
     nginx_install
     base_package
@@ -922,7 +945,7 @@ rm -rf /root/*.zip
 rm -rf /root/*.sh
 rm -rf /root/LICENSE
 rm -rf /root/README.md
-rm -rf /root/domain
+# rm -rf /root/domain (pertahankan file domain)
 #sudo hostnamectl set-hostname $user
 secs_to_human "$(($(date +%s) - ${start}))"
 echo ""

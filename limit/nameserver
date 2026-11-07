@@ -46,16 +46,18 @@ ns_domain_cloudflare() {
 }
 
 setup_dnstt() {
-	cd
-	rm -rf *
-	mkdir -p /etc/slowdns
+	mkdir -p /tmp/slowdns_build /etc/slowdns
+	cd /tmp/slowdns_build
+	rm -rf /tmp/slowdns_build/*
 	wget -O dnstt-server "${REPO}limit/dnstt-server" >/dev/null 2>&1
 	chmod +x dnstt-server >/dev/null 2>&1
 	wget -O dnstt-client "${REPO}limit/dnstt-client" >/dev/null 2>&1
 	chmod +x dnstt-client >/dev/null 2>&1
 	./dnstt-server -gen-key -privkey-file server.key -pubkey-file server.pub
 	chmod +x *
-	mv * /etc/slowdns
+	mv * /etc/slowdns/ 2>/dev/null || true
+	cd /root
+	rm -rf /tmp/slowdns_build
 	wget -O /etc/systemd/system/client.service "${REPO}limit/client" >/dev/null 2>&1
 	wget -O /etc/systemd/system/server.service "${REPO}limit/server" >/dev/null 2>&1
 	sed -i "s/xxxx/$NS_DOMAIN/g" /etc/systemd/system/client.service 
