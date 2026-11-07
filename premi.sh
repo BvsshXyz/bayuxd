@@ -288,7 +288,7 @@ function pasang_domain() {
         echo -e "   \e[1;36m│\e[1;33m          PILIH METODE SETUP DOMAIN VPS             \e[1;36m│\e[0m"
         echo -e "   \e[1;36m├────────────────────────────────────────────────────┤\e[0m"
         echo -e "   \e[1;36m│\e[0m  \e[1;32m[1]\e[0m Domain Sendiri (Custom Host)                  \e[1;36m│\e[0m"
-        echo -e "   \e[1;36m│\e[0m  \e[1;32m[2]\e[0m Domain Bawaan Script (*.bayuuvx.com)          \e[1;36m│\e[0m"
+        echo -e "   \e[1;36m│\e[0m  \e[1;32m[2]\e[0m Buat Subdomain Sendiri (*.bayuuvx.com)        \e[1;36m│\e[0m"
         echo -e "   \e[1;36m└────────────────────────────────────────────────────┘\e[0m"
         echo ""
         read -p "   Pilih Opsi [1-2]: " opt_dom
