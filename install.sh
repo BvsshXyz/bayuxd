@@ -174,9 +174,12 @@ function print_ok() {
 }
 function print_install() {
     echo ""
-    echo -e "   \e[1;36m┌────────────────────────────────────────────────────┐\e[0m"
-    printf "   \e[1;36m│\e[1;33m  [~] %-46s \e[1;36m│\e[0m\n" "$1"
-    echo -e "   \e[1;36m└────────────────────────────────────────────────────┘\e[0m"
+    echo -e "\e[1;36m┌────────────────────────────────────────────────────┐\e[0m"
+    local raw_text="$1"
+    local trimmed="${raw_text:0:44}"
+    local content="  [~] ${trimmed}"
+    printf "\e[1;36m│\e[1;33m %-50s \e[1;36m│\e[0m\n" "$content"
+    echo -e "\e[1;36m└────────────────────────────────────────────────────┘\e[0m"
     sleep 0.5
 }
 function print_error() {
@@ -269,7 +272,7 @@ apt-get remove --purge ufw firewalld -y
 apt-get remove --purge exim4 -y
 apt-get autoremove -y
 apt install -y --no-install-recommends software-properties-common
-apt install zip pwgen openssl netcat socat cron bash-completion -y
+apt install zip pwgen openssl netcat-openbsd socat cron bash-completion -y
 apt install haproxy -y
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
 echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
