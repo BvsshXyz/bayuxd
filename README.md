@@ -40,6 +40,7 @@ bayuxd/
 
 ## ⚡ Fitur Unggulan (Core Highlights)
 
+- 🌐 **Cloudflare Custom Subdomain:** Pilih domain sendiri atau buat subdomain kustom `*.bayuuvx.com` dengan filter anti-duplikat live API Cloudflare.
 - 📱 **Mobile-First Termius UI (54 Columns):** Tampilan tabel rapi, simetris, dan anti-geser di semua layar smartphone.
 - 🕒 **Accurate Hourly Expiry:** Penghitungan masa aktif 24 jam presisi mengikuti jam & menit pembuatan akun (format waktu lokal WIB).
 - ⏱️ **Auto-Kill Trial System:** Akun trial otomatis terhapus bersih setelah 30 menit (dilengkapi estimasi jam mati).
@@ -59,7 +60,7 @@ bayuxd/
 Jalankan perintah ini di terminal VPS (login sebagai `root`):
 
 ```bash
-apt update -y && apt install -y curl wget && wget -q https://raw.githubusercontent.com/BvsshXyz/bayuxd/main/install.sh && chmod +x install.sh && ./install.sh
+apt update -y && apt install -y curl wget && bash <(curl -sL https://raw.githubusercontent.com/BvsshXyz/bayuxd/main/install.sh)
 ```
 
 ---
@@ -72,9 +73,12 @@ apt update -y && apt install -y curl wget && wget -q https://raw.githubuserconte
 | **Dropbear Direct** | `109, 143` | Koneksi langsung Dropbear |
 | **OpenSSH** | `22, 22022` | Standar remote login |
 | **WebSocket Non-TLS** | `80, 8080` | Python 3 Async WebSocket Proxy |
+| **OpenVPN TCP / UDP** | `443, 1194` (TCP) / `2200` (UDP) | Config download via web port 81 |
 | **Xray VMess WS** | `443` (TLS) / `80` (HTTP) | Path: `/vmess` |
 | **Xray VLESS WS** | `443` (TLS) / `80` (HTTP) | Path: `/vless` |
 | **Xray Trojan WS** | `443` (TLS) | Path: `/trojan` |
+| **Shadowsocks-2022** | `443` (AEAD Ciphers) | Proxy ringan anti-sensor |
+| **SlowDNS** | `53, 5300` | SlowDNS Client & Server Query |
 | **BadVPN UDPGW** | `7100, 7200, 7300` | Support UDP Voice Call & Game Online |
 
 ---
