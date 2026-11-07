@@ -380,17 +380,20 @@ function make_folder_xray() {
 function install_xray() {
     clear
     print_install "Memasang Core Xray Modern"
-    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u www-data
+    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
     cp -f /root/mysc/limit/config.json /etc/xray/config.json
-    cp -f /root/mysc/limit/runn.service /etc/systemd/system/runn.service
     domain=$(cat /root/domain | tr -d '\r\n ')
     sed -i "s/xxx/${domain}/g" /etc/xray/config.json
     chmod 644 /etc/xray/config.json
     mkdir -p /usr/local/etc/xray
     ln -sf /etc/xray/config.json /usr/local/etc/xray/config.json
+    
+    # Standarisasi unit service Xray
+    cp -f /root/mysc/limit/runn.service /etc/systemd/system/xray.service
+    cp -f /root/mysc/limit/runn.service /etc/systemd/system/runn.service
     systemctl daemon-reload
-    systemctl enable runn.service 2>/dev/null || true
-    systemctl start runn.service 2>/dev/null || true
+    systemctl enable xray.service runn.service 2>/dev/null || true
+    systemctl restart xray.service 2>/dev/null || true
     print_success "Core Xray Modern"
 }
 
@@ -447,6 +450,7 @@ END
 
 function restart_system() {
     print_success "Konfigurasi Sistem Siap"
+    return 0
 }
 
 function udp_mini(){
@@ -557,8 +561,9 @@ systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
 print_success "SSHD"
 }
 
-clear
-function ins_dropbear(){
+# Kill dropbear port 443 liar jika ada (karena port 443 adalah hak HAProxy)
+pkill -f "dropbear -p 443" 2>/dev/null || true
+fuser -k 443/tcp 2>/dev/null || true
 clear
 print_install "Menginstall Dropbear"
 # // Installing Dropbear
@@ -736,10 +741,12 @@ print_install "Restarting  All Packet"
 systemctl restart nginx 2>/dev/null || true
 systemctl restart openvpn 2>/dev/null || true
 systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
+# Kill proses liar di port 443 sebelum start HAProxy
+pkill -f "dropbear -p 443" 2>/dev/null || true
+fuser -k 443/tcp 2>/dev/null || true
 systemctl restart dropbear 2>/dev/null || true
-systemctl restart fail2ban 2>/dev/null || true
-systemctl restart vnstat 2>/dev/null || true
 systemctl restart haproxy 2>/dev/null || true
+systemctl restart xray 2>/dev/null || systemctl restart runn 2>/dev/null || true
 systemctl restart cron 2>/dev/null || true
     systemctl daemon-reload
     systemctl start netfilter-persistent
