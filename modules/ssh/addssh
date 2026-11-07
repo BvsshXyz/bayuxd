@@ -22,7 +22,6 @@ print_boxed_content() {
     done
 }
 
-
 clear
 echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
 echo -e "${C_BORDER}│${C_TITLE}              CREATE SSH & WS ACCOUNT               ${C_BORDER}│${NC}"
@@ -91,7 +90,12 @@ while true; do
 done
 
 domain=$(cat /etc/xray/domain 2>/dev/null || echo "vpn.bayuuvx.com")
-ip=$(cat /etc/xray/ipvps 2>/dev/null || echo "201.79.110.81")
+ns_domain=$(cat /etc/xray/dns 2>/dev/null || echo "ns.${domain}")
+ip=$(cat /etc/xray/ipvps 2>/dev/null || curl -sS ipv4.icanhazip.com || echo "201.79.110.81")
+city=$(cat /etc/xray/city 2>/dev/null || echo "Singapore")
+isp=$(cat /etc/xray/isp 2>/dev/null || echo "DigitalOcean, LLC")
+
+tgl_create=$(date +"%d %b, %Y [%H:%M]")
 expe=$(date -d "$masaaktif days" +"%d %b, %Y [%H:%M]")
 exp_date=$(date -d "$masaaktif days" +"%Y-%m-%d %H:%M")
 exp_chage=$(date -d "$masaaktif days + 1 day" +"%Y-%m-%d")
@@ -99,7 +103,7 @@ exp_chage=$(date -d "$masaaktif days + 1 day" +"%Y-%m-%d")
 useradd -e "$exp_chage" -s /bin/false -M "$Login" 2>/dev/null
 echo -e "$Pass\n$Pass" | passwd "$Login" &>/dev/null
 
-mkdir -p /etc/kyt/limit/ssh/ip /etc/ssh
+mkdir -p /etc/kyt/limit/ssh/ip /etc/ssh /var/www/html
 if [[ "$iplimit" -gt 0 ]]; then
     echo "$iplimit" > "/etc/kyt/limit/ssh/ip/$Login"
 fi
@@ -107,31 +111,104 @@ fi
 sed -i "/\\b${Login}\\b/d" /etc/ssh/.ssh.db 2>/dev/null || true
 echo "### ${Login} ${exp_date} ${Pass} ${iplimit}" >> /etc/ssh/.ssh.db
 
-payload="GET / HTTP/1.1[crlf]Host: ${domain}[crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf][crlf]"
+payload="GET / HTTP/1.1[crlf]Host: ${domain}[crlf]Connection: Upgrade[crlf]User-Agent: [ua][crlf]Upgrade: websocket[crlf][crlf]"
+link_ovpn="https://${domain}:81/"
+link_save="https://${domain}:81/ssh-${Login}.txt"
+
+if [[ "$iplimit" -eq 0 ]]; then
+    txt_iplimit="Unlimited Device"
+else
+    txt_iplimit="${iplimit} Device"
+fi
+
+# Simpan file web config agar bisa didownload / dicek
+cat > "/var/www/html/ssh-${Login}.txt" << 'EOF'
+=================================================
+             SSH & OVPN ACCOUNT DETAILS
+=================================================
+Username         : LOGIN_NAME
+Password         : PASS_VAL
+Limit IP         : LIMIT_VAL
+Masa Aktif       : DAYS_VAL Hari
+Dibuat Pada      : CREATE_DATE
+Berakhir Pada    : EXP_DATE
+=================================================
+               SERVER & PORT INFO
+=================================================
+Host / Domain    : DOMAIN_NAME
+Host SlowDNS     : NS_DOMAIN_NAME
+Location         : CITY_NAME
+ISP Provider     : ISP_NAME
+Port OpenSSH     : 22, 22022
+Port SSH UDP     : 1-65535
+Port Dropbear    : 443, 109, 143
+Port SSH WS      : 80, 8080
+Port SSH SSL WS  : 443
+Port SSL/TLS     : 443
+Port OVPN WS SSL : 443
+Port OVPN SSL    : 443
+Port OVPN TCP    : 443, 1194
+Port OVPN UDP    : 2200
+BadVPN UDPGW     : 7100, 7200, 7300
+=================================================
+Payload WS       : GET / HTTP/1.1[crlf]Host: DOMAIN_NAME[crlf]Connection: Upgrade[crlf]User-Agent: [ua][crlf]Upgrade: websocket[crlf][crlf]
+OVPN Download    : https://DOMAIN_NAME:81/
+Save Link Account: https://DOMAIN_NAME:81/ssh-LOGIN_NAME.txt
+=================================================
+EOF
+
+sed -i "s/LOGIN_NAME/$Login/g" "/var/www/html/ssh-${Login}.txt"
+sed -i "s/PASS_VAL/$Pass/g" "/var/www/html/ssh-${Login}.txt"
+sed -i "s/LIMIT_VAL/$txt_iplimit/g" "/var/www/html/ssh-${Login}.txt"
+sed -i "s/DAYS_VAL/$masaaktif/g" "/var/www/html/ssh-${Login}.txt"
+sed -i "s/CREATE_DATE/$tgl_create/g" "/var/www/html/ssh-${Login}.txt"
+sed -i "s/EXP_DATE/$expe/g" "/var/www/html/ssh-${Login}.txt"
+sed -i "s/DOMAIN_NAME/$domain/g" "/var/www/html/ssh-${Login}.txt"
+sed -i "s/NS_DOMAIN_NAME/$ns_domain/g" "/var/www/html/ssh-${Login}.txt"
+sed -i "s/CITY_NAME/$city/g" "/var/www/html/ssh-${Login}.txt"
+sed -i "s/ISP_NAME/$isp/g" "/var/www/html/ssh-${Login}.txt"
+chmod 644 "/var/www/html/ssh-${Login}.txt"
 
 clear
 echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
-echo -e "${C_BORDER}│${C_TITLE}               SSH ACCOUNT SUCCESS                  ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TITLE}             SSH & OVPN ACCOUNT SUCCESS             ${C_BORDER}│${NC}"
 echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
-printf "${C_BORDER}│${C_TEXT} Username    : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "$Login"
-printf "${C_BORDER}│${C_TEXT} Password    : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "$Pass"
-printf "${C_BORDER}│${C_TEXT} Host / IP   : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "$ip"
-printf "${C_BORDER}│${C_TEXT} Domain      : ${C_TITLE}%-37s${C_BORDER}│${NC}\n" "$domain"
-printf "${C_BORDER}│${C_TEXT} Dropbear TLS: ${C_VAL}%-37s${C_BORDER}│${NC}\n" "443"
-printf "${C_BORDER}│${C_TEXT} Dropbear Dir: ${C_VAL}%-37s${C_BORDER}│${NC}\n" "109, 143"
-printf "${C_BORDER}│${C_TEXT} OpenSSH Port: ${C_VAL}%-37s${C_BORDER}│${NC}\n" "22, 22022"
-printf "${C_BORDER}│${C_TEXT} WS Non-TLS  : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "80, 8080"
-if [[ "$iplimit" -eq 0 ]]; then
-    printf "${C_BORDER}│${C_TEXT} Limit IP    : ${C_ON}%-37s${C_BORDER}│${NC}\n" "Unlimited Device"
-else
-    printf "${C_BORDER}│${C_TEXT} Limit IP    : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "$iplimit Device"
-fi
-printf "${C_BORDER}│${C_TEXT} Masa Aktif  : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "$masaaktif Hari"
-printf "${C_BORDER}│${C_TEXT} Expired On  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "$expe"
+printf "${C_BORDER}│${C_TEXT} Username        : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "$Login"
+printf "${C_BORDER}│${C_TEXT} Password        : ${C_GOLD}%-33s${C_BORDER}│${NC}\n" "$Pass"
+printf "${C_BORDER}│${C_TEXT} Limit IP        : ${C_ON}%-33s${C_BORDER}│${NC}\n" "$txt_iplimit"
+printf "${C_BORDER}│${C_TEXT} Masa Aktif      : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "$masaaktif Hari"
+printf "${C_BORDER}│${C_TEXT} Dibuat Pada     : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "$tgl_create"
+printf "${C_BORDER}│${C_TEXT} Berakhir Pada   : ${C_ON}%-33s${C_BORDER}│${NC}\n" "$expe"
 echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
-echo -e "${C_BORDER}│${C_HEAD} PAYLOAD WEBSOCKET (HTTP / SOCKS):                  ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_HEAD}                SERVER & PORT INFO                  ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT} Host / Domain   : ${C_TITLE}%-33s${C_BORDER}│${NC}\n" "$domain"
+printf "${C_BORDER}│${C_TEXT} Host SlowDNS    : ${C_TITLE}%-33s${C_BORDER}│${NC}\n" "$ns_domain"
+printf "${C_BORDER}│${C_TEXT} Location        : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "$city"
+printf "${C_BORDER}│${C_TEXT} ISP Provider    : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "$isp"
+printf "${C_BORDER}│${C_TEXT} Port OpenSSH    : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "22, 22022"
+printf "${C_BORDER}│${C_TEXT} Port SSH UDP    : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "1-65535"
+printf "${C_BORDER}│${C_TEXT} Port Dropbear   : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "443, 109, 143"
+printf "${C_BORDER}│${C_TEXT} Port SSH WS     : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "80, 8080"
+printf "${C_BORDER}│${C_TEXT} Port SSH SSL WS : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "443"
+printf "${C_BORDER}│${C_TEXT} Port SSL/TLS    : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "443"
+printf "${C_BORDER}│${C_TEXT} Port OVPN WS SSL: ${C_VAL}%-33s${C_BORDER}│${NC}\n" "443"
+printf "${C_BORDER}│${C_TEXT} Port OVPN SSL   : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "443"
+printf "${C_BORDER}│${C_TEXT} Port OVPN TCP   : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "443, 1194"
+printf "${C_BORDER}│${C_TEXT} Port OVPN UDP   : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "2200"
+printf "${C_BORDER}│${C_TEXT} BadVPN UDPGW    : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "7100, 7200, 7300"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} PAYLOAD WEBSOCKET:                                 ${C_BORDER}│${NC}"
 echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
 print_boxed_content "$payload"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} OVPN DOWNLOAD (CONFIG CLIENT):                     ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+print_boxed_content "$link_ovpn"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} SAVE LINK ACCOUNT (WEB CHECK):                     ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+print_boxed_content "$link_save"
 echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
 echo ""
 echo -ne "${C_TITLE}Tekan [ Enter ] untuk kembali ke menu...${NC}"
