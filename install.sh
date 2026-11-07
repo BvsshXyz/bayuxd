@@ -705,8 +705,8 @@ systemctl start ws
 systemctl restart ws
 wget -q -O /usr/local/share/xray/geosite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" >/dev/null 2>&1
 wget -q -O /usr/local/share/xray/geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" >/dev/null 2>&1
-cp -f /root/mysc/limit/haproxy /usr/sbin/haproxy >/dev/null 2>&1
-chmod +x /usr/sbin/haproxy
+# haproxy resmi paket Ubuntu (jangan ditimpa binary lama libssl 1.1)
+chmod +x /usr/sbin/haproxy 2>/dev/null || true
 iptables -A FORWARD -m string --string "get_peers" --algo bm -j DROP
 iptables -A FORWARD -m string --string "announce_peer" --algo bm -j DROP
 iptables -A FORWARD -m string --string "find_node" --algo bm -j DROP
@@ -743,16 +743,16 @@ systemctl restart haproxy 2>/dev/null || true
 systemctl restart cron 2>/dev/null || true
     systemctl daemon-reload
     systemctl start netfilter-persistent
-    systemctl enable --now nginx
-    systemctl enable --now xray
-    systemctl enable --now rc-local
-    systemctl enable --now dropbear
-    systemctl enable --now openvpn
-    systemctl enable --now cron
-    systemctl enable --now haproxy
-    systemctl enable --now netfilter-persistent
-    systemctl enable --now ws
-    systemctl enable --now fail2ban
+    systemctl enable --now nginx 2>/dev/null || true
+    systemctl enable --now runn 2>/dev/null || true
+    systemctl enable --now rc-local 2>/dev/null || true
+    systemctl enable --now dropbear 2>/dev/null || true
+    systemctl enable --now openvpn 2>/dev/null || true
+    systemctl enable --now cron 2>/dev/null || true
+    systemctl enable --now haproxy 2>/dev/null || true
+    systemctl enable --now netfilter-persistent 2>/dev/null || true
+    systemctl enable --now ws 2>/dev/null || true
+    systemctl enable --now fail2ban 2>/dev/null || true
 history -c
 echo "unset HISTFILE" >> /etc/profile
 
@@ -817,16 +817,16 @@ cat >/etc/cron.d/auto_backup <<-END
 		END
     chmod 644 /root/.profile
 	
-    cat >/etc/cron.d/daily_# reboot disabled for unattended install <<-END
+    cat >/etc/cron.d/daily_reboot <<-END
 		SHELL=/bin/sh
 		PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-		0 5 * * * root /sbin/# reboot disabled for unattended install
+		0 5 * * * root /sbin/reboot
 	END
 
     echo "*/1 * * * * root echo -n > /var/log/nginx/access.log" >/etc/cron.d/log.nginx
     echo "*/1 * * * * root echo -n > /var/log/xray/access.log" >>/etc/cron.d/log.xray
     service cron restart
-    cat >/home/daily_# reboot disabled for unattended install <<-END
+    cat >/home/daily_reboot <<-END
 		5
 	END
 
@@ -859,9 +859,9 @@ EOF
 
     chmod +x /etc/rc.local
     
-    AUTOREB=$(cat /home/daily_# reboot disabled for unattended install)
+    AUTOREB=$(cat /home/daily_reboot 2>/dev/null || echo "5")
     SETT=11
-    if [ $AUTOREB -gt $SETT ]; then
+    if [ "${AUTOREB:-0}" -gt "$SETT" ]; then
         TIME_DATE="PM"
     else
         TIME_DATE="AM"
@@ -878,10 +878,10 @@ print_install "Enable Service"
     systemctl enable --now rc-local
     systemctl enable --now cron
     systemctl enable --now netfilter-persistent
-    systemctl restart nginx
-    systemctl restart xray
-    systemctl restart cron
-    systemctl restart haproxy
+    systemctl restart nginx 2>/dev/null || true
+    systemctl restart runn 2>/dev/null || true
+    systemctl restart cron 2>/dev/null || true
+    systemctl restart haproxy 2>/dev/null || true
     print_success "Enable Service"
     clear
 }
