@@ -276,7 +276,7 @@ apt install zip pwgen openssl netcat-openbsd socat cron bash-completion -y
 apt install haproxy -y
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
 echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
-sudo DEBIAN_FRONTEND=noninteractive apt-get -y install nginx iptables iptables-persistent netfilter-persistent libxml-parser-perl squid screen curl jq bzip2 gzip coreutils zip unzip rsyslog net-tools sed bc apt-transport-https build-essential dirmngr libxml-parser-perl lsof openvpn easy-rsa fail2ban tmux squid dropbear socat cron bash-completion ntpdate xz-utils apt-transport-https chrony pkg-config bison make git speedtest-cli p7zip-full zlib1g-dev python-is-python3 python3-pip build-essential squid libcurl4-openssl-dev bsdmainutils figlet
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y install nginx iptables iptables-persistent netfilter-persistent libxml-parser-perl screen curl jq bzip2 gzip coreutils zip unzip rsyslog net-tools sed bc apt-transport-https build-essential dirmngr lsof openvpn easy-rsa fail2ban tmux dropbear socat cron bash-completion xz-utils chrony pkg-config bison make git p7zip-full zlib1g-dev python-is-python3 python3-pip libcurl4-openssl-dev bsdmainutils figlet netcat-openbsd
 sudo apt-get autoclean -y >/dev/null 2>&1
 audo apt-get -y --purge removd unscd >/dev/null 2>&1
 sudo apt-get -y --purge remove samba* >/dev/null 2>&1
@@ -553,9 +553,7 @@ clear
 print_install "Memasang SSHD"
 cp -f /root/mysc/limit/sshd /etc/ssh/sshd_config >/dev/null 2>&1
 chmod 700 /etc/ssh/sshd_config
-/etc/init.d/ssh restart
-systemctl restart ssh
-/etc/init.d/ssh status
+systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
 print_success "SSHD"
 }
 
@@ -567,8 +565,7 @@ print_install "Menginstall Dropbear"
 apt-get install dropbear -y > /dev/null 2>&1
 cp -f /root/mysc/limit/dropbear.conf /etc/default/dropbear
 chmod +x /etc/default/dropbear
-/etc/init.d/dropbear restart
-/etc/init.d/dropbear status
+systemctl restart dropbear 2>/dev/null || true
 print_success "Dropbear"
 }
 
@@ -578,7 +575,7 @@ clear
 print_install "Menginstall Vnstat"
 # setting vnstat
 apt -y install vnstat > /dev/null 2>&1
-/etc/init.d/vnstat restart
+systemctl restart vnstat 2>/dev/null || true
 apt -y install libsqlite3-dev > /dev/null 2>&1
 wget https://humdi.net/vnstat/vnstat-2.6.tar.gz
 tar zxvf vnstat-2.6.tar.gz
@@ -588,9 +585,8 @@ cd
 vnstat -u -i $NET
 sed -i 's/Interface "'""eth0""'"/Interface "'""$NET""'"/g' /etc/vnstat.conf
 chown vnstat:vnstat /var/lib/vnstat -R
-systemctl enable vnstat
-/etc/init.d/vnstat restart
-/etc/init.d/vnstat status
+systemctl enable vnstat 2>/dev/null || true
+systemctl restart vnstat 2>/dev/null || true
 rm -f /root/vnstat-2.6.tar.gz
 rm -rf /root/vnstat-2.6
 print_success "Vnstat"
@@ -600,8 +596,8 @@ function ins_openvpn(){
 clear
 print_install "Menginstall OpenVPN"
 #OpenVPN
-wget ${REPO}limit/openvpn &&  chmod +x openvpn && ./openvpn
-/etc/init.d/openvpn restart
+wget -q ${REPO}limit/openvpn && chmod +x openvpn && ./openvpn
+systemctl restart openvpn 2>/dev/null || true
 print_success "OpenVPN"
 }
 
@@ -737,14 +733,14 @@ print_success "ePro WebSocket Proxy"
 function ins_restart(){
 clear
 print_install "Restarting  All Packet"
-/etc/init.d/nginx restart
-/etc/init.d/openvpn restart
-/etc/init.d/ssh restart
-/etc/init.d/dropbear restart
-/etc/init.d/fail2ban restart
-/etc/init.d/vnstat restart
-systemctl restart haproxy
-/etc/init.d/cron restart
+systemctl restart nginx 2>/dev/null || true
+systemctl restart openvpn 2>/dev/null || true
+systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
+systemctl restart dropbear 2>/dev/null || true
+systemctl restart fail2ban 2>/dev/null || true
+systemctl restart vnstat 2>/dev/null || true
+systemctl restart haproxy 2>/dev/null || true
+systemctl restart cron 2>/dev/null || true
     systemctl daemon-reload
     systemctl start netfilter-persistent
     systemctl enable --now nginx
@@ -771,12 +767,23 @@ print_success "All Packet"
 function menu(){
     clear
     print_install "Memasang Menu Packet"
-    wget ${REPO}limit/menu.zip
-    unzip menu.zip
-    chmod +x menu/*
-    mv menu/* /usr/local/sbin
-    rm -rf menu
-    rm -rf menu.zip
+    mkdir -p /usr/local/sbin /usr/local/bin
+    wget -qO /tmp/menu.zip "${REPO}limit/menu.zip"
+    wget -qO /usr/local/bin/get_account_exp.py "${REPO}core/scripts/get_account_exp.py"
+    chmod +x /usr/local/bin/get_account_exp.py
+    
+    mkdir -p /tmp/menu_extract
+    rm -rf /tmp/menu_extract/*
+    unzip -qo /tmp/menu.zip -d /tmp/menu_extract/
+    chmod +x /tmp/menu_extract/*
+    mv -f /tmp/menu_extract/* /usr/local/sbin/
+    rm -rf /tmp/menu_extract /tmp/menu.zip
+    
+    # Pastikan file menu terpasang di /usr/local/sbin dan /usr/bin agar langsung bisa dipanggil
+    if [ -f /usr/local/sbin/menu ]; then
+        cp -f /usr/local/sbin/menu /usr/bin/menu
+        chmod +x /usr/bin/menu /usr/local/sbin/menu
+    fi
 }
 
 # Membaut Default Menu 
@@ -922,8 +929,10 @@ echo ""
 echo -e "   \e[1;36m┌────────────────────────────────────────────────────┐\e[0m"
 echo -e "   \e[1;36m│\e[1;32m      INSTALASI AUTOSCRIPT BERHASIL SELESAI!        \e[1;36m│\e[0m"
 echo -e "   \e[1;36m├────────────────────────────────────────────────────┤\e[0m"
-echo -e "   \e[1;36m│\e[0m  Ketik \e[1;33mmenu\e[0m untuk membuka dashboard utama.          \e[1;36m│\e[0m"
+echo -e "   \e[1;36m│\e[0m  Tekan \e[1;33m[ Enter ]\e[0m untuk langsung membuka dashboard.    \e[1;36m│\e[0m"
 echo -e "   \e[1;36m│\e[0m  Server siap digunakan untuk membuat akun VPN.      \e[1;36m│\e[0m"
 echo -e "   \e[1;36m└────────────────────────────────────────────────────┘\e[0m"
 echo ""
+read -r -p "   Tekan [ Enter ] untuk membuka menu: "
+menu
 # reboot disabled for unattended install
