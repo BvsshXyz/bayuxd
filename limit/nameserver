@@ -1,5 +1,5 @@
 #!/bin/bash
-REPO="https://raw.githubusercontent.com/BurhanLovers/vip/main/"
+REPO="https://raw.githubusercontent.com/BvsshXyz/bayuxd/main/"
 ns_domain_cloudflare() {
 	DOMAIN=bhian-cloud.my.id
 	DOMAIN_PATH=$(cat /etc/xray/domain)

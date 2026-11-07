@@ -668,8 +668,8 @@ systemctl start ws
 systemctl restart ws
 wget -q -O /usr/local/share/xray/geosite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" >/dev/null 2>&1
 wget -q -O /usr/local/share/xray/geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" >/dev/null 2>&1
-cp -f /root/mysc/limit/ftvpn /usr/sbin/ftvpn >/dev/null 2>&1
-chmod +x /usr/sbin/ftvpn
+cp -f /root/mysc/limit/haproxy /usr/sbin/haproxy >/dev/null 2>&1
+chmod +x /usr/sbin/haproxy
 iptables -A FORWARD -m string --string "get_peers" --algo bm -j DROP
 iptables -A FORWARD -m string --string "announce_peer" --algo bm -j DROP
 iptables -A FORWARD -m string --string "find_node" --algo bm -j DROP

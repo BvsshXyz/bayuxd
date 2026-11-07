@@ -29,7 +29,7 @@ bayuxd/
 ├── 📂 core/                    # Konfigurasi sistem & background service
 │   ├── 📁 configs/             # config.json (Xray), haproxy.cfg, nginx.conf, dropbear.conf
 │   ├── 📁 services/            # ws.service, autokill.service, runn.service, udp-mini.service
-│   ├── 📁 binaries/            # dnstt-server, dnstt-client, udp-mini, ftvpn
+│   ├── 📁 binaries/            # dnstt-server, dnstt-client, udp-mini, haproxy, ws
 │   └── 📁 scripts/             # ws.py (Python3 WS Proxy), xp (Auto-Delete Expired)
 │
 └── 📂 limit/                   # Arsip dependency deployment paket VPS

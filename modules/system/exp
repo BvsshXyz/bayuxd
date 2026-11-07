@@ -6,7 +6,7 @@ TELEGRAM_BOT_TOKEN="7892524132:AAGXjxrMjCfEVMWpCXBUmtOBHVDKZmm1bbs"
 TELEGRAM_CHAT_ID="6648546911"
 # Informasi kontak
 CONTACT_TELEGRAM="@Burhanssh"
-CONTACT_WHATSAPP="[Hubungi saya di WhatsApp](https://wa.me/6282140646468)"
+CONTACT_WHATSAPP="[Hubungi saya di Telegram](https://t.me/Bayuu_XD)"
 
 # Fungsi untuk mengirim pesan ke bot Telegram
 send_telegram_message() {
