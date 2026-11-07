@@ -24,7 +24,6 @@ bayuxd/
 │   ├── 📁 shadowsocks/         # addss, trialss, renewss, delss, cekss, user-ss
 │   ├── 📁 menu/                # menu, menu2, m-sshws, m-vmess, m-vless, m-trojan, running
 │   ├── 📁 backup/              # backup, restore, autobackup, menu-backup
-│   ├── 📁 bot/                 # bot, mbot, add-bot-panel, add-bot-notif, dll.
 │   └── 📁 system/              # speedtest, ram, about, reboot, clearcache, bbr, dll.
 │
 ├── 📂 core/                    # Konfigurasi sistem & background service
