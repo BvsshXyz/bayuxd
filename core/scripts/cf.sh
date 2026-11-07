@@ -11,10 +11,10 @@ IP=$(curl -sS ipv4.icanhazip.com 2>/dev/null || wget -qO- icanhazip.com 2>/dev/n
 
 echo ""
 echo -e "   \e[1;36m┌────────────────────────────────────────────────────┐\e[0m"
-echo -e "   \e[1;36m│\e[1;33m       INPUT SUBDOMAIN KHUSUS (*.bayuuvx.com)       \e[1;36m│\e[0m"
+echo -e "   \e[1;36m│\e[1;33m          INPUT SUBDOMAIN (*.bayuuvx.com)           \e[1;36m│\e[0m"
 echo -e "   \e[1;36m├────────────────────────────────────────────────────┤\e[0m"
-echo -e "   \e[1;36m│\e[0m Contoh input nama: \e[1;32mbayu\e[0m -> \e[1;36mbayu.bayuuvx.com\e[0m         \e[1;36m│\e[0m"
-echo -e "   \e[1;36m│\e[0m Syarat: Huruf kecil, angka, atau strip (-)          \e[1;36m│\e[0m"
+echo -e "   \e[1;36m│\e[0m  Contoh: \e[1;32mbayu\e[0m  ->  \e[1;36mbayu.bayuuvx.com\e[0m                \e[1;36m│\e[0m"
+echo -e "   \e[1;36m│\e[0m  Syarat: Huruf kecil, angka, atau strip (-)        \e[1;36m│\e[0m"
 echo -e "   \e[1;36m└────────────────────────────────────────────────────┘\e[0m"
 echo ""
 
