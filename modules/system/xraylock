@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function andyyuda() {
+function bayuxd() {
 echo -e "\e[33m──────────────────────────────────────────\033[0m"
 }
 
@@ -8,27 +8,27 @@ clear
 res1() {
 NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/xray/config.json")
 	if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
-        andyyuda
+        bayuxd
         echo -e "\E[40;1;37m          LIST MEMBER V2RAY VMESS         \E[0m"
-        andyyuda      
+        bayuxd      
 		echo -e ""
 		echo -e "You Don't Have a Vmess Account!"
 		echo -e ""
-        andyyuda      
+        bayuxd      
 		read -n 1 -s -r -p "Press any key to back"
         menu
 	fi
 
 	clear
-    andyyuda
+    bayuxd
     echo -e "\E[40;1;37m          LIST MEMBER V2RAY VMESS         \E[0m"
-    andyyuda 
+    bayuxd 
     echo -e "USER          EXPIRED" 
-    andyyuda 
+    bayuxd 
 	grep -e "^### " "/etc/xray/config.json" | cut -d ' ' -f 2-3 | column -t | sort | uniq
     echo -e ""
     echo -e "\e[1;31mTap Enter To Go Back\033[0m"
-    andyyuda 
+    bayuxd 
 	read -rp "Input Username : " user
     if [ -z $user ]; then
     menu
@@ -37,16 +37,16 @@ NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/xray/config.json")
     sed -i "/### $user /{n;s/^/#/}" /etc/xray/config.json
     systemctl restart xray > /dev/null 2>&1
     clear
-    andyyuda
+    bayuxd
     echo -e "\E[40;1;37m        LOCK VMESS ACCOUNT SUCCESS        \E[0m"
-    andyyuda
+    bayuxd
     echo -e ""
     echo -e "${NC}Username Info   : $user"
     echo -e "${NC}Expired Account : $exp"
     echo -e "${NC}Status Locked   : Success"
-    echo -e "Terima kasih telah menggunakan script by andyyuda."
+    echo -e "Terima kasih telah menggunakan script by bayuxd."
     echo -e ""
-    andyyuda
+    bayuxd
     echo -e ""
     read -n 1 -s -r -p "Press any key to back"
     menu
@@ -56,27 +56,27 @@ NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/xray/config.json")
 res2() {
 NUMBER_OF_CLIENTS=$(grep -c -E "^#& " "/etc/xray/config.json")
 	if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
-        andyyuda
+        bayuxd
         echo -e "\E[40;1;37m          LIST MEMBER V2RAY VLESS         \E[0m"
-        andyyuda      
+        bayuxd      
 		echo -e ""
 		echo -e "You Don't Have a Vless Account!"
 		echo -e ""
-        andyyuda      
+        bayuxd      
 		read -n 1 -s -r -p "Press any key to back"
         menu
 	fi
 
 	clear
-    andyyuda
+    bayuxd
     echo -e "\E[40;1;37m          LIST MEMBER V2RAY VLESS         \E[0m"
-    andyyuda 
+    bayuxd 
     echo -e "USER          EXPIRED" 
-    andyyuda 
+    bayuxd 
 	grep -e "^#& " "/etc/xray/config.json" | cut -d ' ' -f 2-3 | column -t | sort | uniq
     echo -e ""
     echo -e "\e[1;31mTap Enter To Go Back\033[0m"
-    andyyuda 
+    bayuxd 
 	read -rp "Input Username : " user
     if [ -z $user ]; then
     menu
@@ -85,16 +85,16 @@ NUMBER_OF_CLIENTS=$(grep -c -E "^#& " "/etc/xray/config.json")
     sed -i "/#& $user /{n;s/^/#/}" /etc/xray/config.json
     systemctl restart xray > /dev/null 2>&1
     clear
-    andyyuda
+    bayuxd
     echo -e "\E[40;1;37m        LOCK VLESS ACCOUNT SUCCESS        \E[0m"
-    andyyuda
+    bayuxd
     echo -e ""
     echo -e "${NC}Username Info   : $user"
     echo -e "${NC}Expired Account : $exp"
     echo -e "${NC}Status Locked   : Success"
-    echo -e "Terima kasih telah menggunakan script by andyyuda."
+    echo -e "Terima kasih telah menggunakan script by bayuxd."
     echo -e ""
-    andyyuda
+    bayuxd
     echo -e ""
     read -n 1 -s -r -p "Press any key to back"
     menu
@@ -104,27 +104,27 @@ NUMBER_OF_CLIENTS=$(grep -c -E "^#& " "/etc/xray/config.json")
 res3() {
 NUMBER_OF_CLIENTS=$(grep -c -E "^#! " "/etc/xray/config.json")
 	if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
-        andyyuda
+        bayuxd
         echo -e "\E[40;1;37m         LIST MEMBER V2RAY TROJAN         \E[0m"
-        andyyuda      
+        bayuxd      
 		echo -e ""
 		echo -e "You Don't Have a Trojan Account!"
 		echo -e ""
-        andyyuda      
+        bayuxd      
 		read -n 1 -s -r -p "Press any key to back"
         menu
 	fi
 
 	clear
-    andyyuda
+    bayuxd
     echo -e "\E[40;1;37m         LIST MEMBER V2RAY TROJAN         \E[0m"
-    andyyuda 
+    bayuxd 
     echo -e "USER          EXPIRED" 
-    andyyuda 
+    bayuxd 
 	grep -e "^#! " "/etc/xray/config.json" | cut -d ' ' -f 2-3 | column -t | sort | uniq
     echo -e ""
     echo -e "\e[1;31mTap Enter To Go Back\033[0m"
-    andyyuda 
+    bayuxd 
 	read -rp "Input Username : " user
     if [ -z $user ]; then
     menu
@@ -133,16 +133,16 @@ NUMBER_OF_CLIENTS=$(grep -c -E "^#! " "/etc/xray/config.json")
     sed -i "/#! $user /{n;s/^/#/}" /etc/xray/config.json
     systemctl restart xray > /dev/null 2>&1
     clear
-    andyyuda
+    bayuxd
     echo -e "\E[40;1;37m        LOCK TROJAN ACCOUNT SUCCESS       \E[0m"
-    andyyuda
+    bayuxd
     echo -e ""
     echo -e "${NC}Username Info   : $user"
     echo -e "${NC}Expired Account : $exp"
     echo -e "${NC}Status Locked   : Success"
-    echo -e "Terima kasih telah menggunakan script by andyyuda."
+    echo -e "Terima kasih telah menggunakan script by bayuxd."
     echo -e ""
-    andyyuda
+    bayuxd
     echo -e ""
     read -n 1 -s -r -p "Press any key to back"
     menu
@@ -152,27 +152,27 @@ NUMBER_OF_CLIENTS=$(grep -c -E "^#! " "/etc/xray/config.json")
 res4() {
 NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/xray/config.json")
 	if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
-        andyyuda
+        bayuxd
         echo -e "\E[40;1;37m          LIST MEMBER V2RAY VMESS         \E[0m"
-        andyyuda      
+        bayuxd      
 		echo -e ""
 		echo -e "You Don't Have a Vmess Account!"
 		echo -e ""
-        andyyuda      
+        bayuxd      
 		read -n 1 -s -r -p "Press any key to back"
         menu
 	fi
 
 	clear
-    andyyuda
+    bayuxd
     echo -e "\E[40;1;37m          LIST MEMBER V2RAY VMESS         \E[0m"
-    andyyuda 
+    bayuxd 
     echo -e "USER          EXPIRED" 
-    andyyuda 
+    bayuxd 
 	grep -e "^### " "/etc/xray/config.json" | cut -d ' ' -f 2-3 | column -t | sort | uniq
     echo -e ""
     echo -e "\e[1;31mTap Enter To Go Back\033[0m"
-    andyyuda 
+    bayuxd 
 	read -rp "Input Username : " user
     if [ -z $user ]; then
     menu
@@ -181,16 +181,16 @@ NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/xray/config.json")
     sed -i "/### $user /{n;s/^#//}" /etc/xray/config.json
     systemctl restart xray > /dev/null 2>&1
     clear
-    andyyuda
+    bayuxd
     echo -e "\E[40;1;37m       UNLOCK VMESS ACCOUNT SUCCESS       \E[0m"
-    andyyuda
+    bayuxd
     echo -e ""
     echo -e "${NC}Username Info   : $user"
     echo -e "${NC}Expired Account : $exp"
     echo -e "${NC}Status Unlocked : Success"
-    echo -e "Terima kasih telah menggunakan script by andyyuda."
+    echo -e "Terima kasih telah menggunakan script by bayuxd."
     echo -e ""
-    andyyuda
+    bayuxd
     echo -e ""
     read -n 1 -s -r -p "Press any key to back"
     menu
@@ -200,27 +200,27 @@ NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/xray/config.json")
 res5() {
 NUMBER_OF_CLIENTS=$(grep -c -E "^#& " "/etc/xray/config.json")
 	if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
-        andyyuda
+        bayuxd
         echo -e "\E[40;1;37m          LIST MEMBER V2RAY VLESS         \E[0m"
-        andyyuda      
+        bayuxd      
 		echo -e ""
 		echo -e "You Don't Have a Vless Account!"
 		echo -e ""
-        andyyuda      
+        bayuxd      
 		read -n 1 -s -r -p "Press any key to back"
         menu
 	fi
 
 	clear
-    andyyuda
+    bayuxd
     echo -e "\E[40;1;37m          LIST MEMBER V2RAY VLESS         \E[0m"
-    andyyuda 
+    bayuxd 
     echo -e "USER          EXPIRED" 
-    andyyuda 
+    bayuxd 
 	grep -e "^#& " "/etc/xray/config.json" | cut -d ' ' -f 2-3 | column -t | sort | uniq
     echo -e ""
     echo -e "\e[1;31mTap Enter To Go Back\033[0m"
-    andyyuda 
+    bayuxd 
 	read -rp "Input Username : " user
     if [ -z $user ]; then
     menu
@@ -229,16 +229,16 @@ NUMBER_OF_CLIENTS=$(grep -c -E "^#& " "/etc/xray/config.json")
     sed -i "/#& $user /{n;s/^#//}" /etc/xray/config.json
     systemctl restart xray > /dev/null 2>&1
     clear
-    andyyuda
+    bayuxd
     echo -e "\E[40;1;37m       UNLOCK VLESS ACCOUNT SUCCESS       \E[0m"
-    andyyuda
+    bayuxd
     echo -e ""
     echo -e "${NC}Username Info   : $user"
     echo -e "${NC}Expired Account : $exp"
     echo -e "${NC}Status Unlocked : Success"
-    echo -e "Terima kasih telah menggunakan script by andyyuda."
+    echo -e "Terima kasih telah menggunakan script by bayuxd."
     echo -e ""
-    andyyuda
+    bayuxd
     echo -e ""
     read -n 1 -s -r -p "Press any key to back"
     menu
@@ -248,27 +248,27 @@ NUMBER_OF_CLIENTS=$(grep -c -E "^#& " "/etc/xray/config.json")
 res6() {
 NUMBER_OF_CLIENTS=$(grep -c -E "^#! " "/etc/xray/config.json")
 	if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
-        andyyuda
+        bayuxd
         echo -e "\E[40;1;37m         LIST MEMBER V2RAY TROJAN         \E[0m"
-        andyyuda      
+        bayuxd      
 		echo -e ""
 		echo -e "You Don't Have a Trojan Account!"
 		echo -e ""
-        andyyuda      
+        bayuxd      
 		read -n 1 -s -r -p "Press any key to back"
         menu
 	fi
 
 	clear
-    andyyuda
+    bayuxd
     echo -e "\E[40;1;37m         LIST MEMBER V2RAY TROJAN         \E[0m"
-    andyyuda 
+    bayuxd 
     echo -e "USER          EXPIRED" 
-    andyyuda 
+    bayuxd 
 	grep -e "^#! " "/etc/xray/config.json" | cut -d ' ' -f 2-3 | column -t | sort | uniq
     echo -e ""
     echo -e "\e[1;31mTap Enter To Go Back\033[0m"
-    andyyuda 
+    bayuxd 
 	read -rp "Input Username : " user
     if [ -z $user ]; then
     menu
@@ -277,16 +277,16 @@ NUMBER_OF_CLIENTS=$(grep -c -E "^#! " "/etc/xray/config.json")
     sed -i "/#! $user /{n;s/^#//}" /etc/xray/config.json
     systemctl restart xray > /dev/null 2>&1
     clear
-    andyyuda
+    bayuxd
     echo -e "\E[40;1;37m       UNLOCK TROJAN ACCOUNT SUCCESS      \E[0m"
-    andyyuda
+    bayuxd
     echo -e ""
     echo -e "${NC}Username Info   : $user"
     echo -e "${NC}Expired Account : $exp"
     echo -e "${NC}Status Unlocked : Success"
-    echo -e "Terima kasih telah menggunakan script by andyyuda."
+    echo -e "Terima kasih telah menggunakan script by bayuxd."
     echo -e ""
-    andyyuda
+    bayuxd
     echo -e ""
     read -n 1 -s -r -p "Press any key to back"
     menu
@@ -294,9 +294,9 @@ NUMBER_OF_CLIENTS=$(grep -c -E "^#! " "/etc/xray/config.json")
 }
 
 clear
-andyyuda
+bayuxd
 echo -e "\E[40;1;37m       MENU LOCK UNLOCK XRAY ACCOUNT      \E[0m"
-andyyuda
+bayuxd
 echo -e ""
 echo -e "  [\033[1;96m01\E[0m] Lock Vmess Account"
 echo -e "  [\033[1;96m02\E[0m] Lock Vless Account"
@@ -305,7 +305,7 @@ echo -e "  [\033[1;96m04\E[0m] Unlock Vmess Account"
 echo -e "  [\033[1;96m05\E[0m] Unlock Vless Account"
 echo -e "  [\033[1;96m06\E[0m] Unlock Trojan Account"
 echo -e ""
-andyyuda
+bayuxd
 echo -e ""
 read -p "Select From Options ➤ " opt
 case $opt in

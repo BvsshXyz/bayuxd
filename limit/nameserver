@@ -1,12 +1,13 @@
 #!/bin/bash
 REPO="https://raw.githubusercontent.com/BvsshXyz/bayuxd/main/"
 ns_domain_cloudflare() {
-	DOMAIN=bhian-cloud.my.id
+	# Cloudflare Configuration Bayu XD (bayuuvx.com)
+	DOMAIN="bayuuvx.com"
 	DOMAIN_PATH=$(cat /etc/xray/domain)
 	SUB=$(tr </dev/urandom -dc a-z0-9 | head -c7)
-	NS_DOMAIN=${SUB}.bhian-cloud.my.id
-	CF_ID=top1playershotgun@gmail.com
-        CF_KEY=009537bbb75788ac6a06428078b8f55e23781
+	NS_DOMAIN=${SUB}.${DOMAIN}
+	CF_ID=$(echo "YW1pbmJheXU1NDRAZ21haWwuY29t" | base64 -d)
+	CF_KEY=$(echo "Y2ZrX0dqS0hWQ25NZXF6ek4wQkU1NUcyTUdUbW1vRDFoVGpyNzRzNEh4M3cyOWI0ODc4Mg==" | base64 -d)
 	set -euo pipefail
 	IP=$(curl -sS ipv4.icanhazip.com);
 	echo "Updating DNS NS for ${NS_DOMAIN}..."

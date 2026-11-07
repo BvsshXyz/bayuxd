@@ -284,8 +284,24 @@ function pasang_domain() {
     if [ -f /root/domain ] && [ -s /root/domain ]; then
         host1=$(cat /root/domain | tr -d '\r\n ')
     else
-        echo -e "   \e[1;32mMasukkan Subdomain / Domain Anda : \e[0m"
-        read -p "   Subdomain: " host1
+        echo -e "   \e[1;36m┌──────────────────────────────────────────┐\e[0m"
+        echo -e "   \e[1;36m│\e[1;33m       PILIH METODE SETUP DOMAIN VPS      \e[1;36m│\e[0m"
+        echo -e "   \e[1;36m├──────────────────────────────────────────┤\e[0m"
+        echo -e "   \e[1;36m│\e[0m \e[1;32m[1]\e[0m Domain Sendiri (Custom Host)         \e[1;36m│\e[0m"
+        echo -e "   \e[1;36m│\e[0m \e[1;32m[2]\e[0m Domain Bawaan Script (*.bayuuvx.com)  \e[1;36m│\e[0m"
+        echo -e "   \e[1;36m└──────────────────────────────────────────┘\e[0m"
+        echo ""
+        read -p "   Pilih Opsi [1-2]: " opt_dom
+        
+        if [ "$opt_dom" = "2" ]; then
+            print_install "Membuat Subdomain Otomatis Cloudflare (bayuuvx.com)..."
+            wget -qO /root/cf.sh "${REPO}limit/cf.sh" && chmod +x /root/cf.sh && bash /root/cf.sh
+            rm -f /root/cf.sh
+            host1=$(cat /root/domain 2>/dev/null | tr -d '\r\n ')
+        else
+            echo -e "   \e[1;32mMasukkan Subdomain / Domain Anda : \e[0m"
+            read -p "   Subdomain: " host1
+        fi
     fi
     mkdir -p /etc/xray /var/lib/kyt
     echo "IP=" > /var/lib/kyt/ipvps.conf
