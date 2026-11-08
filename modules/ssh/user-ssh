@@ -1,42 +1,70 @@
 #!/bin/bash
+# ====================================================
+#   BAYU XD TUNNELING SYSTEM - USER DETAIL SSH/OVPN
+#   Precise 54-Column Modern Card Layout
+# ====================================================
 
-# Fungsi untuk mencetak teks dalam kotak garis
-print_separator() {
-    local separator=""
-    local width=50
+C_BORDER="\033[1;36m"
+C_HEAD="\033[1;37m"
+C_TEXT="\033[0;37m"
+C_VAL="\033[1;32m"
+C_OFF="\033[1;31m"
+C_NUM="\033[1;33m"
+C_CYAN="\033[0;36m"
+NC="\033[0m"
 
-    for (( i=0; i<width; i++ )); do
-        separator="${separator}-"
-    done
+clear
+echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+echo -e "${C_BORDER}│${C_HEAD}              DETAIL USER ACCOUNT SSH               ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
 
-    echo "$separator"
-}
+count=0
 
-# Menambahkan judul SSH OVPN Account pada setiap baris
-echo -e "\033[1;93m--------------------------------------------------\033[0m"
-echo -e "\033[1;93m SSH OVPN Account\033[0m"
-echo -e "\033[1;93m--------------------------------------------------\033[0m"
-
-# Counter untuk nomor per akun
-count=1
-
-# Memeriksa detail akun SSH menggunakan grep
-grep "#ssh#" /etc/ssh/.ssh.db | while read -r line; do
-    # Memisahkan informasi menggunakan spasi sebagai delimiter
-    IFS='#' read -r _ username_info <<< "$line"
-    IFS=' ' read -r _ username password quota limit_ip expired_date <<< "$username_info"
+while read -r line; do
+    [[ -z "$line" ]] && continue
+    # Format line: ### user exp pass limit
+    user=$(echo "$line" | awk '{print $2}')
+    exp=$(echo "$line" | awk '{print $3}')
+    pass=$(echo "$line" | awk '{print $4}')
+    limit=$(echo "$line" | awk '{print $5}')
     
-    # Mencetak pemisah akun dengan judul
-    echo -e "\033[1;93m--------------------------------------------------\033[0m"
-    echo -e "\033[1;93m Account $count\033[0m"
-    echo -e "\033[1;93m--------------------------------------------------\033[0m"
-
-    # Mencetak informasi akun SSH dalam format yang diminta dengan warna
-    echo "$(tput setaf 3)Username: $(tput sgr0)$username"
-    echo "$(tput setaf 4)Password: $(tput sgr0)$password"
-    echo "$(tput setaf 2)Limit IP: $(tput sgr0)$limit_ip User"
-    echo "$(tput setaf 5)Expired: $(tput sgr0)$expired_date"
-    
-    # Menambahkan 1 ke counter
+    [[ -z "$user" ]] && continue
     ((count++))
-done
+    num_str=$(printf "%02d" "$count")
+    
+    # Cek status lock / aktif
+    if passwd -S "$user" 2>/dev/null | grep -q "L"; then
+        status_tag="${C_OFF}LOCKED${NC}"
+    else
+        status_tag="${C_VAL}ACTIVE${NC}"
+    fi
+    
+    # Cek live online
+    active_login=$(pgrep -u "$user" 2>/dev/null | wc -l)
+    if [ "$active_login" -gt 0 ]; then
+        online_str="${C_VAL}Online ($active_login Proc)${NC}"
+    else
+        online_str="${C_OFF}Offline${NC}"
+    fi
+    
+    [[ -z "$limit" || "$limit" == "0" ]] && limit_str="No Limit" || limit_str="${limit} IP"
+
+    echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+    printf "${C_BORDER}│${C_NUM} [%s]${C_TEXT} Username : ${C_VAL}%-18s${C_TEXT} Status: %-14b${C_BORDER}│${NC}\n" \
+        "$num_str" "${user:0:18}" "$status_tag"
+    echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+    printf "${C_BORDER}│${C_TEXT} Password       : ${C_CYAN}%-33s${C_BORDER}│${NC}\n" "${pass:0:33}"
+    printf "${C_BORDER}│${C_TEXT} Max Limit IP   : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "$limit_str"
+    printf "${C_BORDER}│${C_TEXT} Status Login   : %-42b${C_BORDER}│${NC}\n" "$online_str"
+    printf "${C_BORDER}│${C_TEXT} Expired Date   : ${C_NUM}%-33s${C_BORDER}│${NC}\n" "$exp"
+    echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+done < <(grep -E "^### " /etc/ssh/.ssh.db 2>/dev/null)
+
+if [ "$count" -eq 0 ]; then
+    echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+    echo -e "${C_BORDER}│${C_OFF}             TIDAK ADA DATA USER SSH                ${C_BORDER}│${NC}"
+    echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+fi
+
+echo ""
+read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."

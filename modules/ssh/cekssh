@@ -1,77 +1,52 @@
 #!/bin/bash
-# Color
-RED='\033[0;31m'
-NC='\033[0m'
-GREEN='\033[0;32m'
-ORANGE='\033[0;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-LIGHT='\033[0;37m'
+# ====================================================
+#   BAYU XD TUNNELING SYSTEM - CHECK LIVE SSH SESSIONS
+#   Outputs raw "PID - USER - IP" for Limit / Monitor
+# ====================================================
 
-clear
-echo " "
-echo " "
+LOG="/var/log/auth.log"
+[ ! -f "$LOG" ] && [ -f "/var/log/secure" ] && LOG="/var/log/secure"
 
-if [ -e "/var/log/auth.log" ]; then
-        LOG="/var/log/auth.log";
-fi
-if [ -e "/var/log/secure" ]; then
-        LOG="/var/log/secure";
-fi
-                
-data=( `ps aux | grep -i dropbear | awk '{print $2}'`);
-echo -e "\033[1;36m┌──────────────────────────────────────────┐\033[0m"
-echo "    ID  |  Username  |  IP Address";
-echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
-cat $LOG | grep -i dropbear | grep -i "Password auth succeeded" > /tmp/login-db.txt;
-for PID in "${data[@]}"
-do
-            cat /tmp/login-db.txt | grep "dropbear\[$PID\]" > /tmp/login-db-pid.txt;
-            NUM=`cat /tmp/login-db-pid.txt | wc -l`;
-            USER=`cat /tmp/login-db-pid.txt | awk '{print $10}'`;
-            IP=`cat /tmp/login-db-pid.txt | awk '{print $12}'`;
-            if [ $NUM -eq 1 ]; then
-                    echo "$PID - $USER - $IP";
-                    fi
-done
-echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
-echo " "
-echo -e "\033[1;36m┌──────────────────────────────────────────┐\033[0m"
-echo "    ID  |  Username  |  IP Address";
-echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
-cat $LOG | grep -i sshd | grep -i "Accepted password for" > /tmp/login-db.txt
-data=( `ps aux | grep "\[priv\]" | sort -k 72 | awk '{print $2}'`);
-
-for PID in "${data[@]}"
-do
-            cat /tmp/login-db.txt | grep "sshd\[$PID\]" > /tmp/login-db-pid.txt;
-            NUM=`cat /tmp/login-db-pid.txt | wc -l`;
-            USER=`cat /tmp/login-db-pid.txt | awk '{print $9}'`;
-            IP=`cat /tmp/login-db-pid.txt | awk '{print $11}'`;
-            if [ $NUM -eq 1 ]; then
-                    echo "$PID - $USER - $IP";
+# 1. Dropbear Active Sessions
+data=( $(ps aux | grep -i dropbear | grep -v grep | awk '{print $2}') )
+if [ -f "$LOG" ]; then
+    grep -i dropbear "$LOG" 2>/dev/null | grep -i "Password auth succeeded" > /tmp/login-db.txt
+    for PID in "${data[@]}"; do
+        grep "dropbear\[$PID\]" /tmp/login-db.txt 2>/dev/null > /tmp/login-db-pid.txt
+        NUM=$(wc -l < /tmp/login-db-pid.txt 2>/dev/null)
+        USER=$(awk '{print $10}' /tmp/login-db-pid.txt 2>/dev/null | tr -d "'")
+        IP=$(awk '{print $12}' /tmp/login-db-pid.txt 2>/dev/null | cut -d: -f1)
+        if [ "$NUM" -ge 1 ] && [ -n "$USER" ]; then
+            echo "$PID - $USER - $IP"
         fi
-done
-echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
-if [ -f "/etc/openvpn/server/openvpn-tcp.log" ]; then
-echo ""
-echo -e "\033[1;36m┌──────────────────────────────────────────┐\033[0m"
-echo "    Username  |  IP Address  |  Connected";
-echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
-            cat /etc/openvpn/server/openvpn-tcp.log | grep -w "^CLIENT_LIST" | cut -d ',' -f 2,3,8 | sed -e 's/,/      /g' > /tmp/vpn-login-tcp.txt
-            cat /tmp/vpn-login-tcp.txt
+    done
 fi
-echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
 
-if [ -f "/etc/openvpn/server/openvpn-udp.log" ]; then
-echo " "
-echo -e "\033[1;36m┌──────────────────────────────────────────┐\033[0m"
-echo "    Username  |  IP Address  |  Connected";
-echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
-            cat /etc/openvpn/server/openvpn-udp.log | grep -w "^CLIENT_LIST" | cut -d ',' -f 2,3,8 | sed -e 's/,/      /g' > /tmp/vpn-login-udp.txt
-            cat /tmp/vpn-login-udp.txt
+# 2. OpenSSH Active Sessions
+data_ssh=( $(ps aux | grep "sshd: " | grep "\[priv\]" | grep -v grep | awk '{print $2}') )
+if [ -f "$LOG" ]; then
+    grep -i sshd "$LOG" 2>/dev/null | grep -i "Accepted password for" > /tmp/login-sshd.txt
+    for PID in "${data_ssh[@]}"; do
+        grep "sshd\[$PID\]" /tmp/login-sshd.txt 2>/dev/null > /tmp/login-sshd-pid.txt
+        NUM=$(wc -l < /tmp/login-sshd-pid.txt 2>/dev/null)
+        USER=$(awk '{print $9}' /tmp/login-sshd-pid.txt 2>/dev/null | tr -d "'")
+        IP=$(awk '{print $11}' /tmp/login-sshd-pid.txt 2>/dev/null)
+        if [ "$NUM" -ge 1 ] && [ -n "$USER" ]; then
+            echo "$PID - $USER - $IP"
+        fi
+    done
 fi
-echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
-echo "";
-echo ""
+
+# 3. OpenVPN Active Sessions
+if [ -f "/etc/openvpn/server/openvpn-tcp.log" ]; then
+    grep -w "^CLIENT_LIST" /etc/openvpn/server/openvpn-tcp.log 2>/dev/null | while IFS=',' read -r _ vuser vip _; do
+        [ -n "$vuser" ] && [ "$vuser" != "UNDEF" ] && echo "0 - $vuser - $vip"
+    done
+fi
+if [ -f "/etc/openvpn/server/openvpn-udp.log" ]; then
+    grep -w "^CLIENT_LIST" /etc/openvpn/server/openvpn-udp.log 2>/dev/null | while IFS=',' read -r _ vuser vip _; do
+        [ -n "$vuser" ] && [ "$vuser" != "UNDEF" ] && echo "0 - $vuser - $vip"
+    done
+fi
+
+rm -f /tmp/login-db*.txt /tmp/login-sshd*.txt 2>/dev/null
