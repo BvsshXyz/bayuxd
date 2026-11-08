@@ -326,27 +326,25 @@ clear
 function pasang_domain() {
     clear
     print_install "Konfigurasi Domain VPS"
-    if [ -f /root/domain ] && [ -s /root/domain ]; then
-        host1=$(cat /root/domain | tr -d '\r\n ')
+    rm -f /root/domain /root/scdomain /etc/xray/domain 2>/dev/null || true
+
+    echo -e "   \e[1;36m┌────────────────────────────────────────────────────┐\e[0m"
+    echo -e "   \e[1;36m│\e[1;33m          PILIH METODE SETUP DOMAIN VPS             \e[1;36m│\e[0m"
+    echo -e "   \e[1;36m├────────────────────────────────────────────────────┤\e[0m"
+    echo -e "   \e[1;36m│\e[0m  \e[1;32m[1]\e[0m Domain Sendiri (Custom Host)                  \e[1;36m│\e[0m"
+    echo -e "   \e[1;36m│\e[0m  \e[1;32m[2]\e[0m Buat Subdomain Sendiri (*.bayuuvx.com)        \e[1;36m│\e[0m"
+    echo -e "   \e[1;36m└────────────────────────────────────────────────────┘\e[0m"
+    echo ""
+    read -p "   Pilih Opsi [1-2]: " opt_dom
+    
+    if [ "$opt_dom" = "2" ]; then
+        print_install "Membuat Subdomain Otomatis Cloudflare (bayuuvx.com)..."
+        wget -qO /root/cf.sh "${REPO}limit/cf.sh" && chmod +x /root/cf.sh && bash /root/cf.sh
+        rm -f /root/cf.sh
+        host1=$(cat /root/domain 2>/dev/null | tr -d '\r\n ')
     else
-        echo -e "   \e[1;36m┌────────────────────────────────────────────────────┐\e[0m"
-        echo -e "   \e[1;36m│\e[1;33m          PILIH METODE SETUP DOMAIN VPS             \e[1;36m│\e[0m"
-        echo -e "   \e[1;36m├────────────────────────────────────────────────────┤\e[0m"
-        echo -e "   \e[1;36m│\e[0m  \e[1;32m[1]\e[0m Domain Sendiri (Custom Host)                  \e[1;36m│\e[0m"
-        echo -e "   \e[1;36m│\e[0m  \e[1;32m[2]\e[0m Buat Subdomain Sendiri (*.bayuuvx.com)        \e[1;36m│\e[0m"
-        echo -e "   \e[1;36m└────────────────────────────────────────────────────┘\e[0m"
-        echo ""
-        read -p "   Pilih Opsi [1-2]: " opt_dom
-        
-        if [ "$opt_dom" = "2" ]; then
-            print_install "Membuat Subdomain Otomatis Cloudflare (bayuuvx.com)..."
-            wget -qO /root/cf.sh "${REPO}limit/cf.sh" && chmod +x /root/cf.sh && bash /root/cf.sh
-            rm -f /root/cf.sh
-            host1=$(cat /root/domain 2>/dev/null | tr -d '\r\n ')
-        else
-            echo -e "   \e[1;32mMasukkan Subdomain / Domain Anda : \e[0m"
-            read -p "   Subdomain: " host1
-        fi
+        echo -e "   \e[1;32mMasukkan Subdomain / Domain Anda : \e[0m"
+        read -p "   Subdomain: " host1
     fi
     mkdir -p /etc/xray /var/lib/kyt
     echo "IP=" > /var/lib/kyt/ipvps.conf
@@ -896,7 +894,7 @@ function instal(){
 clear
     # Auto-Wipe sisa instalasi lama agar selalu fresh & bersih
     systemctl stop nginx haproxy xray runn ws dropbear openvpn 2>/dev/null || true
-    rm -rf /etc/xray /etc/v2ray /etc/kyt /var/lib/kyt /etc/slowdns /root/.acme.sh /usr/local/sbin/* /usr/bin/menu /usr/bin/ws.py /var/log/xray/* 2>/dev/null || true
+    rm -rf /etc/xray /etc/v2ray /etc/kyt /var/lib/kyt /etc/slowdns /root/.acme.sh /usr/local/sbin/* /usr/bin/menu /usr/bin/ws.py /var/log/xray/* /root/domain /root/scdomain 2>/dev/null || true
 
     mkdir -p /root/mysc/limit /etc/xray /var/log/xray /var/lib/kyt /usr/local/sbin
     chmod 777 /var/log/xray 2>/dev/null || true
