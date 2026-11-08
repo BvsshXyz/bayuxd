@@ -234,7 +234,7 @@ function print_install() {
     local content="  [~] ${trimmed}"
     printf "\e[1;36m│\e[1;33m %-50s \e[1;36m│\e[0m\n" "$content"
     echo -e "\e[1;36m└────────────────────────────────────────────────────┘\e[0m"
-    sleep 0.5
+    sleep 0.1
 }
 function print_error() {
     echo -e "   \e[1;31m[✗] ERROR: $1\e[0m"
@@ -298,60 +298,26 @@ function first_setup(){
 
 clear
 function nginx_install() {
-    # // Checking System
-    if [[ $(cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g') == "ubuntu" ]]; then
-        print_install "Setup nginx For OS Is $(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')"
-        # // sudo add-apt-repository ppa:nginx/stable -y 
-        sudo apt-get install nginx -y 
-    elif [[ $(cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g') == "debian" ]]; then
-        print_success "Setup nginx For OS Is $(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')"
-        apt -y install nginx 
-    else
-        echo -e " Your OS Is Not Supported ( ${YELLOW}$(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')${FONT} )"
-        # // exit 1
-    fi
+    :
 }
 
-# Update and remove packages
+# Update and install base packages (Ultra Fast Batch)
 function base_package() {
     clear
-print_install "Menginstall Packet Yang Dibutuhkan"
+    print_install "Menginstall Paket Inti VPN (Turbo)"
 
-apt update -y
-apt install sudo -y
-sudo apt-get clean all
-apt install -y debconf-utils
-apt install p7zip-full at -y
-apt-get remove --purge ufw firewalld -y
-apt-get remove --purge exim4 -y
-apt-get autoremove -y
-apt install -y --no-install-recommends software-properties-common
-apt install zip pwgen openssl netcat-openbsd socat cron bash-completion -y
-apt install haproxy -y
-echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
-echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
-sudo DEBIAN_FRONTEND=noninteractive apt-get -y install nginx iptables iptables-persistent netfilter-persistent libxml-parser-perl screen curl jq bzip2 gzip coreutils zip unzip rsyslog net-tools sed bc apt-transport-https build-essential dirmngr lsof openvpn easy-rsa fail2ban tmux dropbear socat cron bash-completion xz-utils chrony pkg-config bison make git p7zip-full zlib1g-dev python-is-python3 python3-pip libcurl4-openssl-dev bsdmainutils figlet netcat-openbsd
-sudo apt-get autoclean -y >/dev/null 2>&1
-audo apt-get -y --purge removd unscd >/dev/null 2>&1
-sudo apt-get -y --purge remove samba* >/dev/null 2>&1
-sudo apt-get -y --purge remove bind9* >/dev/null 2>&1
-sudo apt-get -y remove sendmail* >/dev/null 2>&1
-apt autoremove -y >/dev/null 2>&1
+    export DEBIAN_FRONTEND=noninteractive
+    echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
+    echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
 
-source /etc/os-release
-OS="$ID $VERSION_ID"
-if [[ "$OS" == "debian 12" || "$OS" == "ubuntu 24.04" || "$OS" == "ubuntu 24.10" ]]; then
-    sudo apt update
-    sudo apt install -y python3-venv python3-pip
-    sudo python3 -m venv /opt/gdown-venv
-    sudo /opt/gdown-venv/bin/pip install gdown
-    sudo ln -sf /opt/gdown-venv/bin/gdown /usr/local/bin/gdown
-else
-    pip install gdown
-fi
+    apt-get update -y >/dev/null 2>&1
+    apt-get install -y --no-install-recommends \
+        nginx haproxy dropbear openvpn easy-rsa fail2ban cron socat jq curl wget zip unzip tar \
+        xz-utils bsdmainutils netcat-openbsd iptables iptables-persistent netfilter-persistent \
+        at chrony pwgen vnstat bc python3-pip python-is-python3 screen rsyslog \
+        libxml-parser-perl p7zip-full figlet >/dev/null 2>&1
 
-print_success "Packet Yang Dibutuhkan"
-
+    print_success "Paket Inti VPN"
 }
 clear
 # Fungsi input domain
@@ -615,11 +581,12 @@ systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
 print_success "SSHD"
 }
 
-# Kill dropbear port 443 liar jika ada (karena port 443 adalah hak HAProxy)
-pkill -f "dropbear -p 443" 2>/dev/null || true
-fuser -k 443/tcp 2>/dev/null || true
-clear
-print_install "Menginstall Dropbear"
+function ins_dropbear(){
+    # Kill dropbear port 443 liar jika ada (karena port 443 adalah hak HAProxy)
+    pkill -f "dropbear -p 443" 2>/dev/null || true
+    fuser -k 443/tcp 2>/dev/null || true
+    clear
+    print_install "Menginstall Dropbear"
 # // Installing Dropbear
 apt-get install dropbear -y > /dev/null 2>&1
 cp -f /root/mysc/limit/dropbear.conf /etc/default/dropbear
@@ -630,25 +597,15 @@ print_success "Dropbear"
 
 clear
 function ins_vnstat(){
-clear
-print_install "Menginstall Vnstat"
-# setting vnstat
-apt -y install vnstat > /dev/null 2>&1
-systemctl restart vnstat 2>/dev/null || true
-apt -y install libsqlite3-dev > /dev/null 2>&1
-wget https://humdi.net/vnstat/vnstat-2.6.tar.gz
-tar zxvf vnstat-2.6.tar.gz
-cd vnstat-2.6
-./configure --prefix=/usr --sysconfdir=/etc && make && make install
-cd
-vnstat -u -i $NET
-sed -i 's/Interface "'""eth0""'"/Interface "'""$NET""'"/g' /etc/vnstat.conf
-chown vnstat:vnstat /var/lib/vnstat -R
-systemctl enable vnstat 2>/dev/null || true
-systemctl restart vnstat 2>/dev/null || true
-rm -f /root/vnstat-2.6.tar.gz
-rm -rf /root/vnstat-2.6
-print_success "Vnstat"
+    clear
+    print_install "Menginstall Vnstat"
+    NET=$(ip -4 route ls 2>/dev/null | awk '/default/ {print $5}' | head -n1)
+    [[ -z "$NET" ]] && NET="eth0"
+    sed -i "s/Interface .*/Interface \"$NET\"/g" /etc/vnstat.conf 2>/dev/null || true
+    chown -R vnstat:vnstat /var/lib/vnstat 2>/dev/null || true
+    systemctl enable --now vnstat 2>/dev/null || true
+    systemctl restart vnstat 2>/dev/null || true
+    print_success "Vnstat"
 }
 
 function ins_openvpn(){
@@ -661,22 +618,12 @@ print_success "OpenVPN"
 }
 
 function ins_backup(){
-clear
-print_install "Memasang Backup Server"
-#BackupOption
-apt install rclone -y
-printf "q\n" | rclone config
+    clear
+    print_install "Memasang Backup Server"
+    apt-get install -y --no-install-recommends rclone msmtp-mta ca-certificates bsd-mailx >/dev/null 2>&1 || true
     [ -f /root/mysc/limit/rclone.conf ] && cp -f /root/mysc/limit/rclone.conf /root/.config/rclone/rclone.conf 2>/dev/null || true
-    #Install Wondershaper
-    rm -rf /bin/wondershaper
-    cd /bin
-    git clone https://github.com/magnific0/wondershaper.git 2>/dev/null || true
-    cd wondershaper 2>/dev/null && make install >/dev/null 2>&1 || true
-    cd /root
-    rm -rf /bin/wondershaper
     echo > /home/limit
-    apt install msmtp-mta ca-certificates bsd-mailx -y >/dev/null 2>&1
-    cat<<EOF>>/etc/msmtprc
+    cat <<EOF >/etc/msmtprc
 defaults
 tls on
 tls_starttls on
@@ -698,20 +645,14 @@ EOF
 
 clear
 function ins_swab(){
-clear
-print_install "Memasang Swap 1 G"
-gotop_latest="$(curl -s https://api.github.com/repos/xxxserxxx/gotop/releases | grep tag_name | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
-    gotop_link="https://github.com/xxxserxxx/gotop/releases/download/v$gotop_latest/gotop_v"$gotop_latest"_linux_amd64.deb"
-    curl -sL "$gotop_link" -o /tmp/gotop.deb
-    dpkg -i /tmp/gotop.deb >/dev/null 2>&1
-    
+    clear
+    print_install "Memasang Swap 1 G"
     # > Buat swap sebesar 1G (jika belum ada)
     got_swap=$(free -m | awk '/Swap/{print $2}')
-    if [ "$got_swap" -lt 500 ]; then
-        dd if=/dev/zero of=/swapfile bs=1024 count=1048576 status=none 2>/dev/null || true
+    if [ "${got_swap:-0}" -lt 500 ]; then
+        fallocate -l 1G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=1024 status=none 2>/dev/null || true
+        chmod 0600 /swapfile 2>/dev/null || true
         mkswap /swapfile >/dev/null 2>&1 || true
-        chown root:root /swapfile 2>/dev/null || true
-        chmod 0600 /swapfile >/dev/null 2>&1 || true
         swapon /swapfile >/dev/null 2>&1 || true
         sed -i '/\/swapfile/d' /etc/fstab 2>/dev/null || true
         echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
