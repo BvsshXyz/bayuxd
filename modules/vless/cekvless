@@ -63,4 +63,6 @@ printf "${C_BORDER}│${C_TEXT}  Total: ${C_NUM}%-2s${C_TEXT} User        Online
     "$count" "$online" "$((count - online))"
 echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
 echo ""
-read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
+echo -ne "${C_CYAN}Tekan [ Enter ] untuk kembali ke menu VLESS...${NC}"
+read -r
+m-vless

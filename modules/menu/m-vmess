@@ -34,7 +34,7 @@ case "$opt" in
     2|02) trialws ;;
     3|03) renewws ;;
     4|04) delws ;;
-    5|05) cekws ; read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali..."; m-vmess ;;
+    5|05) cekws ;;
     6|06) cat /var/www/html/vmess-*.txt 2>/dev/null || echo "Belum ada config tersimpan."; read -n 1 -s -r -p "Tekan [ Enter ]..."; m-vmess ;;
     7|07) ganti-ip-vmess 2>/dev/null || m-vmess ;;
     8|08) change-vmess-qouta 2>/dev/null || m-vmess ;;
