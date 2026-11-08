@@ -128,19 +128,38 @@ function check_permission() {
     local EXP_DATE
     CLIENT_NAME=$(echo "$CLIENT_DATA" | awk '{print $2}')
     EXP_DATE=$(echo "$CLIENT_DATA" | awk '{print $3}')
-    local TODAY
-    TODAY=$(date +"%Y-%m-%d")
 
-    if [[ "$EXP_DATE" != "Lifetime" ]] && [[ "$TODAY" > "$EXP_DATE" ]]; then
+    local INSTALL_TIME
+    INSTALL_TIME=$(cat /etc/kyt/install_time 2>/dev/null)
+    if [[ -z "$INSTALL_TIME" ]]; then
+        INSTALL_TIME=$(date +"%H:%M")
+        mkdir -p /etc/kyt
+        echo "$INSTALL_TIME" > /etc/kyt/install_time
+    fi
+
+    local EXP_SHOW
+    local EXP_TIMESTAMP
+    if [[ "$EXP_DATE" == *"Lifetime"* ]] || [[ "$CLIENT_NAME" == *"Owner"* ]]; then
+        EXP_SHOW="Lifetime (VIP)"
+        EXP_TIMESTAMP=0
+    else
+        EXP_SHOW="${EXP_DATE} [${INSTALL_TIME}]"
+        local EXP_DATETIME="${EXP_DATE} ${INSTALL_TIME}"
+        EXP_TIMESTAMP=$(date -d "$EXP_DATETIME" +%s 2>/dev/null || date -d "$EXP_DATE" +%s 2>/dev/null || echo "0")
+    fi
+
+    local NOW_TIMESTAMP
+    NOW_TIMESTAMP=$(date +%s)
+    if [[ "$EXP_TIMESTAMP" -gt 0 ]] && [[ "$NOW_TIMESTAMP" -gt "$EXP_TIMESTAMP" ]]; then
         clear
         echo ""
         echo -e "   \e[1;31m┌────────────────────────────────────────────────────┐\e[0m"
-        echo -e "   \e[1;31m│\e[1;37m                LISENSI SUDAH EXPIRED               \e[1;31m│\e[0m"
+        echo -e "   \e[1;31m│\e[1;37m                LISENSI TELAH EXPIRED               \e[1;31m│\e[0m"
         echo -e "   \e[1;31m├────────────────────────────────────────────────────┤\e[0m"
-        echo -e "   \e[1;31m│\e[0m  Masa aktif lisensi untuk IP ini telah berakhir!   \e[1;31m│\e[0m"
+        echo -e "   \e[1;31m│\e[0m  Masa aktif autoscript VPS Anda telah berakhir!    \e[1;31m│\e[0m"
         printf "   \e[1;31m│\e[0m  Client    : \e[1;33m%-38s\e[1;31m│\e[0m\n" "$CLIENT_NAME"
         printf "   \e[1;31m│\e[0m  IP VPS    : \e[1;33m%-38s\e[1;31m│\e[0m\n" "$MYIP"
-        printf "   \e[1;31m│\e[0m  Expired On: \e[1;31m%-38s\e[1;31m│\e[0m\n" "$EXP_DATE (EXPIRED)"
+        printf "   \e[1;31m│\e[0m  Expired On: \e[1;31m%-38s\e[1;31m│\e[0m\n" "${EXP_SHOW} (EXPIRED)"
         echo -e "   \e[1;31m├────────────────────────────────────────────────────┤\e[0m"
         echo -e "   \e[1;31m│\e[0m  Silakan hubungi admin untuk perpanjang lisensi:   \e[1;31m│\e[0m"
         printf "   \e[1;31m│\e[0m  Telegram  : \e[1;36m%-38s\e[1;31m│\e[0m\n" "@Bayuu_XD"
@@ -153,9 +172,10 @@ function check_permission() {
     # Simpan info lisensi untuk sistem & dashboard
     mkdir -p /etc/kyt /etc/xray
     echo "$CLIENT_NAME" > /etc/kyt/client_name
-    echo "$EXP_DATE" > /etc/kyt/client_exp
+    echo "$EXP_SHOW" > /etc/kyt/client_exp
+    echo "$EXP_TIMESTAMP" > /etc/kyt/client_exp_ts
     echo "$CLIENT_NAME" > /usr/bin/user 2>/dev/null || true
-    echo "$EXP_DATE" > /usr/bin/e 2>/dev/null || true
+    echo "$EXP_SHOW" > /usr/bin/e 2>/dev/null || true
 
     clear
     echo ""
@@ -164,7 +184,7 @@ function check_permission() {
     echo -e "   \e[1;36m├────────────────────────────────────────────────────┤\e[0m"
     printf "   \e[1;36m│\e[0m  Client    : \e[1;33m%-38s\e[1;36m│\e[0m\n" "$CLIENT_NAME"
     printf "   \e[1;36m│\e[0m  IP VPS    : \e[1;33m%-38s\e[1;36m│\e[0m\n" "$MYIP"
-    printf "   \e[1;36m│\e[0m  Expired On: \e[1;32m%-38s\e[1;36m│\e[0m\n" "$EXP_DATE"
+    printf "   \e[1;36m│\e[0m  Expired On: \e[1;32m%-38s\e[1;36m│\e[0m\n" "$EXP_SHOW"
     echo -e "   \e[1;36m└────────────────────────────────────────────────────┘\e[0m"
     echo ""
     sleep 1.5

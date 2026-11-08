@@ -6,6 +6,44 @@
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
+# Check License Validity Real-Time
+check_license() {
+    local client_name
+    local client_exp
+    local exp_ts
+    client_name=$(cat /etc/kyt/client_name 2>/dev/null || echo "Unknown")
+    client_exp=$(cat /etc/kyt/client_exp 2>/dev/null || echo "Expired")
+    exp_ts=$(cat /etc/kyt/client_exp_ts 2>/dev/null)
+
+    if [[ -z "$exp_ts" ]]; then
+        local raw_date
+        raw_date=$(echo "$client_exp" | sed 's/\[//; s/\]//')
+        exp_ts=$(date -d "$raw_date" +%s 2>/dev/null || echo "0")
+    fi
+
+    local now_ts
+    now_ts=$(date +%s)
+
+    if [[ "$client_exp" != *"Lifetime"* ]] && [[ "$client_name" != *"Owner"* ]] && [[ "$exp_ts" -gt 0 ]] && [[ "$now_ts" -gt "$exp_ts" ]]; then
+        clear
+        echo ""
+        echo -e "\033[38;5;196m┌────────────────────────────────────────────────────┐\033[0m"
+        echo -e "\033[38;5;196m│\033[1;37m                LISENSI TELAH EXPIRED               \033[38;5;196m│\033[0m"
+        echo -e "\033[38;5;196m├────────────────────────────────────────────────────┤\033[0m"
+        echo -e "\033[38;5;196m│\033[0m  Masa aktif autoscript VPS Anda telah berakhir!    \033[38;5;196m│\033[0m"
+        printf "\033[38;5;196m│\033[0m  Client    : \033[1;33m%-38s\033[38;5;196m│\033[0m\n" "$client_name"
+        printf "\033[38;5;196m│\033[0m  Expired On: \033[1;31m%-38s\033[38;5;196m│\033[0m\n" "${client_exp} (EXPIRED)"
+        echo -e "\033[38;5;196m├────────────────────────────────────────────────────┤\033[0m"
+        echo -e "\033[38;5;196m│\033[0m  Silakan hubungi admin untuk perpanjang lisensi:   \033[38;5;196m│\033[0m"
+        printf "\033[38;5;196m│\033[0m  Telegram  : \033[1;36m%-38s\033[38;5;196m│\033[0m\n" "@Bayuu_XD"
+        printf "\033[38;5;196m│\033[0m  Channel   : \033[1;36m%-38s\033[38;5;196m│\033[0m\n" "@aibansos"
+        echo -e "\033[38;5;196m└────────────────────────────────────────────────────┘\033[0m"
+        echo ""
+        exit 1
+    fi
+}
+check_license
+
 # High-Contrast VIP Palette
 C_BORDER="\033[38;5;39m"     # Deep Sky Blue
 C_TITLE="\033[1;38;5;51m"    # Bright Cyan Bold
@@ -103,10 +141,11 @@ echo -e "${C_BORDER}├───────────────────
 echo -e "${C_BORDER}│${C_TEXT} [${C_HEAD}09${C_TEXT}] Renew SSL Cert     ${C_BORDER}│${C_TEXT} [${C_RED}00${C_TEXT}] Exit to Shell       ${C_BORDER}│${NC}"
 echo -e "${C_BORDER}├─────────────────────────┴──────────────────────────┤${NC}"
 echo -e "${C_BORDER}│${C_HEAD}            CLIENT & LICENSE INFORMATION            ${C_BORDER}│${NC}"
-echo -e "${C_BORDER}├─────────────────────────┬──────────────────────────┤${NC}"
-printf "${C_BORDER}│${C_TEXT} Client  : ${C_GOLD}%-14s${C_BORDER}│${C_TEXT} Expired : ${C_ON}%-15s${C_BORDER}│${NC}\n" "$CLIENT_NAME" "$EXP_DAYS"
-printf "${C_BORDER}│${C_TEXT} Status  : ${C_ON}%-14s${C_BORDER}│${C_TEXT} Version : ${C_VAL}%-15s${C_BORDER}│${NC}\n" "$STATUS_LIC" "v2.5 Stable"
-echo -e "${C_BORDER}└─────────────────────────┴──────────────────────────┘${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT} %-16s: ${C_GOLD}%-32s ${C_BORDER}│${NC}\n" "Client Name" "${CLIENT_NAME:0:32}"
+printf "${C_BORDER}│${C_TEXT} %-16s: ${C_ON}%-32s ${C_BORDER}│${NC}\n" "License Status" "${STATUS_LIC:0:32}"
+printf "${C_BORDER}│${C_TEXT} %-16s: ${C_ON}%-32s ${C_BORDER}│${NC}\n" "Expired On" "${EXP_DAYS:0:32}"
+echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
 echo ""
 echo -ne "${C_TITLE}» Select Option ${C_VAL}[00-09]${C_TITLE}: ${NC}"
 read -r opt
