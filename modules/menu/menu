@@ -24,7 +24,7 @@ check_license() {
     local now_ts
     now_ts=$(date +%s)
 
-    if [[ "$client_exp" != *"Lifetime"* ]] && [[ "$client_name" != *"Owner"* ]] && [[ "$exp_ts" -gt 0 ]] && [[ "$now_ts" -gt "$exp_ts" ]]; then
+    if [[ "$client_exp" != *"Lifetime"* ]] && [[ "$exp_ts" -gt 0 ]] && [[ "$now_ts" -gt "$exp_ts" ]]; then
         clear
         echo ""
         echo -e "\033[38;5;196m┌────────────────────────────────────────────────────┐\033[0m"
