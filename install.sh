@@ -892,10 +892,6 @@ print_install "Enable Service"
 # Fingsi Install Script
 function instal(){
 clear
-    # Auto-Wipe sisa instalasi lama agar selalu fresh & bersih
-    systemctl stop nginx haproxy xray runn ws dropbear openvpn 2>/dev/null || true
-    rm -rf /etc/xray /etc/v2ray /etc/kyt /var/lib/kyt /etc/slowdns /root/.acme.sh /usr/local/sbin/* /usr/bin/menu /usr/bin/ws.py /var/log/xray/* /root/domain /root/scdomain 2>/dev/null || true
-
     mkdir -p /root/mysc/limit /etc/xray /var/log/xray /var/lib/kyt /usr/local/sbin
     chmod 777 /var/log/xray 2>/dev/null || true
     wget -qO /root/mysc/limit/config.json "${REPO}limit/config.json"
