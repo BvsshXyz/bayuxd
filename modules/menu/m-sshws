@@ -39,7 +39,7 @@ case "$opt" in
     2|02) trial ;;
     3|03) renewssh ;;
     4|04) delssh ;;
-    5|05) ceklim ;;
+    5|05) ceklim ; m-sshws ;;
     6|06) member ; m-sshws ;;
     7|07) delexp ; m-sshws ;;
     8|08) lock ; m-sshws ;;

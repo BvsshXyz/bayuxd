@@ -34,7 +34,7 @@ case "$opt" in
     2|02) trialvless ;;
     3|03) renewvless ;;
     4|04) delvless ;;
-    5|05) cekvless ;;
+    5|05) cekvless ; m-vless ;;
     6|06) cat /var/www/html/vless-*.txt 2>/dev/null || echo "Belum ada config tersimpan."; read -n 1 -s -r -p "Tekan [ Enter ]..."; m-vless ;;
     7|07) ganti-ip-vless 2>/dev/null || m-vless ;;
     8|08) change-vless-qouta 2>/dev/null || m-vless ;;

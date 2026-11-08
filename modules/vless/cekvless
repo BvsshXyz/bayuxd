@@ -65,4 +65,3 @@ echo -e "${C_BORDER}└───────────────────
 echo ""
 echo -ne "${C_CYAN}Tekan [ Enter ] untuk kembali ke menu VLESS...${NC}"
 read -r
-m-vless
