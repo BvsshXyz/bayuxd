@@ -64,8 +64,10 @@ ISP=$(cat /etc/xray/isp 2>/dev/null)
 [[ -z "$ISP" ]] && ISP="DigitalOcean, LLC"
 
 # License / Client Identity Info
-CLIENT_NAME="Bayu XD"
-EXP_DAYS="Lifetime (VIP)"
+CLIENT_NAME=$(cat /etc/kyt/client_name 2>/dev/null)
+[[ -z "$CLIENT_NAME" ]] && CLIENT_NAME="Bayu XD"
+EXP_DAYS=$(cat /etc/kyt/client_exp 2>/dev/null)
+[[ -z "$EXP_DAYS" ]] && EXP_DAYS="Lifetime (VIP)"
 STATUS_LIC="Active (HWID)"
 
 clear 2>/dev/null || true

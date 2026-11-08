@@ -87,56 +87,89 @@ if [ "$(systemd-detect-virt)" == "openvz" ]; then
 		echo "OpenVZ is not supported"
 		exit 1
 fi
-red='\e[1;31m'
-green='\e[0;32m'
-NC='\e[0m'
-#IZIN SCRIPT
-MYIP=$(curl -sS ipv4.icanhazip.com)
-echo -e "\e[32mloading...\e[0m"
-clear
-#IZIN SCRIPT
-MYIP=$(curl -sS ipv4.icanhazip.com)
-echo -e "\e[32mloading...\e[0m" 
-clear
-# Version sc
-clear
-#########################
-# USERNAME
-rm -f /usr/bin/user
-username=$(curl https://raw.githubusercontent.com/BvsshXyz/bayuxd/main/izin | grep $MYIP | awk '{print $2}')
-echo "$username" >/usr/bin/user
-expx=$(curl https://raw.githubusercontent.com/BvsshXyz/bayuxd/main/izin | grep $MYIP | awk '{print $3}')
-echo "$expx" >/usr/bin/e
-# DETAIL ORDER
-username=$(cat /usr/bin/user)
-oid=$(cat /usr/bin/ver)
-exp=$(cat /usr/bin/e)
-clear
-# CERTIFICATE STATUS
-d1=$(date -d "$valid" +%s)
-d2=$(date -d "$today" +%s)
-certifacate=$(((d1 - d2) / 86400))
-# VPS Information
-DATE=$(date +'%Y-%m-%d')
-datediff() {
-    d1=$(date -d "$1" +%s)
-    d2=$(date -d "$2" +%s)
-    echo -e "$COLOR1 $NC Expiry In   : $(( (d1 - d2) / 86400 )) Days"
-}
-mai="datediff "$Exp" "$DATE""
+# ============================================================
+# SISTEM KUNCI LISENSI IP (BAYU XD)
+# ============================================================
+function check_permission() {
+    clear
+    echo -e "   \e[1;36m[~] Memeriksa otorisasi lisensi IP VPS ke database...\e[0m"
+    local MYIP
+    MYIP=$(curl -s -4 ipv4.icanhazip.com 2>/dev/null || curl -s -4 ifconfig.me 2>/dev/null || wget -qO- -4 icanhazip.com 2>/dev/null)
+    
+    if [[ -z "$MYIP" ]]; then
+        echo -e "   \e[1;31m[!] Gagal mendeteksi alamat IP Publik VPS Anda!\e[0m"
+        exit 1
+    fi
 
-# Status ExpiRED Active | Geo Project
-Info="(${green}Active${NC})"
-Error="(${RED}ExpiRED${NC})"
-today=`date -d "0 days" +"%Y-%m-%d"`
-Exp1=$(curl https://raw.githubusercontent.com/BvsshXyz/bayuxd/main/izin | grep $MYIP | awk '{print $4}')
-if [[ $today < $Exp1 ]]; then
-sts="${Info}"
-else
-sts="${Info}"
-fi
-echo -e "\e[32mloading...\e[0m"
-clear
+    local RAW_DATA
+    RAW_DATA=$(curl -sSL "https://raw.githubusercontent.com/BvsshXyz/bayuxd/main/izin" 2>/dev/null)
+    local CLIENT_DATA
+    CLIENT_DATA=$(echo "$RAW_DATA" | grep -w "$MYIP" | head -n1)
+
+    if [[ -z "$CLIENT_DATA" ]]; then
+        clear
+        echo ""
+        echo -e "   \e[1;31m┌────────────────────────────────────────────────────┐\e[0m"
+        echo -e "   \e[1;31m│\e[1;37m                AKSES SCRIPT DITOLAK                \e[1;31m│\e[0m"
+        echo -e "   \e[1;31m├────────────────────────────────────────────────────┤\e[0m"
+        echo -e "   \e[1;31m│\e[0m  IP VPS Anda belum terdaftar di database lisensi!  \e[1;31m│\e[0m"
+        printf "   \e[1;31m│\e[0m  IP VPS    : \e[1;33m%-38s\e[1;31m│\e[0m\n" "$MYIP"
+        printf "   \e[1;31m│\e[0m  Status    : \e[1;31m%-38s\e[1;31m│\e[0m\n" "PERMISSION DENIED (UNREGISTERED)"
+        echo -e "   \e[1;31m├────────────────────────────────────────────────────┤\e[0m"
+        echo -e "   \e[1;31m│\e[0m  Silakan hubungi admin untuk aktivasi lisensi:     \e[1;31m│\e[0m"
+        printf "   \e[1;31m│\e[0m  Telegram  : \e[1;36m%-38s\e[1;31m│\e[0m\n" "@Bayuu_XD"
+        printf "   \e[1;31m│\e[0m  Channel   : \e[1;36m%-38s\e[1;31m│\e[0m\n" "@aibansos"
+        echo -e "   \e[1;31m└────────────────────────────────────────────────────┘\e[0m"
+        echo ""
+        exit 1
+    fi
+
+    local CLIENT_NAME
+    local EXP_DATE
+    CLIENT_NAME=$(echo "$CLIENT_DATA" | awk '{print $2}')
+    EXP_DATE=$(echo "$CLIENT_DATA" | awk '{print $3}')
+    local TODAY
+    TODAY=$(date +"%Y-%m-%d")
+
+    if [[ "$EXP_DATE" != "Lifetime" ]] && [[ "$TODAY" > "$EXP_DATE" ]]; then
+        clear
+        echo ""
+        echo -e "   \e[1;31m┌────────────────────────────────────────────────────┐\e[0m"
+        echo -e "   \e[1;31m│\e[1;37m                LISENSI SUDAH EXPIRED               \e[1;31m│\e[0m"
+        echo -e "   \e[1;31m├────────────────────────────────────────────────────┤\e[0m"
+        echo -e "   \e[1;31m│\e[0m  Masa aktif lisensi untuk IP ini telah berakhir!   \e[1;31m│\e[0m"
+        printf "   \e[1;31m│\e[0m  Client    : \e[1;33m%-38s\e[1;31m│\e[0m\n" "$CLIENT_NAME"
+        printf "   \e[1;31m│\e[0m  IP VPS    : \e[1;33m%-38s\e[1;31m│\e[0m\n" "$MYIP"
+        printf "   \e[1;31m│\e[0m  Expired On: \e[1;31m%-38s\e[1;31m│\e[0m\n" "$EXP_DATE (EXPIRED)"
+        echo -e "   \e[1;31m├────────────────────────────────────────────────────┤\e[0m"
+        echo -e "   \e[1;31m│\e[0m  Silakan hubungi admin untuk perpanjang lisensi:   \e[1;31m│\e[0m"
+        printf "   \e[1;31m│\e[0m  Telegram  : \e[1;36m%-38s\e[1;31m│\e[0m\n" "@Bayuu_XD"
+        printf "   \e[1;31m│\e[0m  Channel   : \e[1;36m%-38s\e[1;31m│\e[0m\n" "@aibansos"
+        echo -e "   \e[1;31m└────────────────────────────────────────────────────┘\e[0m"
+        echo ""
+        exit 1
+    fi
+
+    # Simpan info lisensi untuk sistem & dashboard
+    mkdir -p /etc/kyt /etc/xray
+    echo "$CLIENT_NAME" > /etc/kyt/client_name
+    echo "$EXP_DATE" > /etc/kyt/client_exp
+    echo "$CLIENT_NAME" > /usr/bin/user 2>/dev/null || true
+    echo "$EXP_DATE" > /usr/bin/e 2>/dev/null || true
+
+    clear
+    echo ""
+    echo -e "   \e[1;36m┌────────────────────────────────────────────────────┐\e[0m"
+    echo -e "   \e[1;36m│\e[1;32m            VERIFIKASI LISENSI BERHASIL             \e[1;36m│\e[0m"
+    echo -e "   \e[1;36m├────────────────────────────────────────────────────┤\e[0m"
+    printf "   \e[1;36m│\e[0m  Client    : \e[1;33m%-38s\e[1;36m│\e[0m\n" "$CLIENT_NAME"
+    printf "   \e[1;36m│\e[0m  IP VPS    : \e[1;33m%-38s\e[1;36m│\e[0m\n" "$MYIP"
+    printf "   \e[1;36m│\e[0m  Expired On: \e[1;32m%-38s\e[1;36m│\e[0m\n" "$EXP_DATE"
+    echo -e "   \e[1;36m└────────────────────────────────────────────────────┘\e[0m"
+    echo ""
+    sleep 1.5
+}
+check_permission
 # REPO    
 REPO="https://raw.githubusercontent.com/BvsshXyz/bayuxd/main/"
     wget -qO /tmp/mysc.zip "${REPO}limit/mysc_files.zip" 2>/dev/null || true
