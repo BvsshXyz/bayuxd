@@ -18,9 +18,9 @@ clear
 #	 menu
 #else
 
-echo -e "Installing TCP BBR Mod By Kyt & Ridwan"
+echo -e "Installing TCP BBR Mod By Bayu XD"
 echo -e "Please Wait BBR Installation Will Starting . . ."
-sleep 5
+sleep 0.5
 clear
 
 touch /usr/local/sbin/bbr
