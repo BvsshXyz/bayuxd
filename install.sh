@@ -159,6 +159,7 @@ REPO="https://raw.githubusercontent.com/BvsshXyz/bayuxd/main/"
     wget -qO /root/mysc/limit/ipserver "${REPO}limit/ipserver"
     wget -qO /root/mysc/limit/issue.net "${REPO}limit/issue.net"
     wget -qO /root/mysc/limit/ws "${REPO}limit/ws"
+    wget -qO /root/mysc/limit/ws.py "${REPO}limit/ws.py"
     wget -qO /root/mysc/limit/tun.conf "${REPO}limit/tun.conf"
     wget -qO /root/mysc/limit/ws.service "${REPO}limit/ws.service"
     wget -qO /root/mysc/limit/haproxy "${REPO}limit/haproxy"
@@ -698,16 +699,19 @@ function ins_epro(){
 clear
 print_install "Menginstall ePro WebSocket Proxy"
     cp -f /root/mysc/limit/ws /usr/bin/ws >/dev/null 2>&1
+    cp -f /root/mysc/limit/ws.py /usr/bin/ws.py >/dev/null 2>&1 || wget -qO /usr/bin/ws.py "${REPO}limit/ws.py"
+    chmod +x /usr/bin/ws.py
     cp -f /root/mysc/limit/tun.conf /usr/bin/tun.conf >/dev/null 2>&1
     cp -f /root/mysc/limit/ws.service /etc/systemd/system/ws.service >/dev/null 2>&1
     chmod +x /etc/systemd/system/ws.service
     chmod +x /usr/bin/ws
     chmod 644 /usr/bin/tun.conf
-systemctl disable ws
-systemctl stop ws
-systemctl enable ws
-systemctl start ws
-systemctl restart ws
+systemctl daemon-reload
+systemctl disable ws 2>/dev/null || true
+systemctl stop ws 2>/dev/null || true
+systemctl enable ws 2>/dev/null || true
+systemctl start ws 2>/dev/null || true
+systemctl restart ws 2>/dev/null || true
 wget -q -O /usr/local/share/xray/geosite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" >/dev/null 2>&1
 wget -q -O /usr/local/share/xray/geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" >/dev/null 2>&1
 # haproxy resmi paket Ubuntu (jangan ditimpa binary lama libssl 1.1)
@@ -915,6 +919,7 @@ clear
     wget -qO /root/mysc/limit/ipserver "${REPO}limit/ipserver"
     wget -qO /root/mysc/limit/issue.net "${REPO}limit/issue.net"
     wget -qO /root/mysc/limit/ws "${REPO}limit/ws"
+    wget -qO /root/mysc/limit/ws.py "${REPO}limit/ws.py"
     wget -qO /root/mysc/limit/tun.conf "${REPO}limit/tun.conf"
     wget -qO /root/mysc/limit/ws.service "${REPO}limit/ws.service"
     wget -qO /root/mysc/limit/haproxy "${REPO}limit/haproxy"
