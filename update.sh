@@ -30,13 +30,13 @@ fun_bar() {
     tput cnorm
 }
 res1() {
-    wget https://raw.githubusercontent.com/BayuXD-Tunnel/mysc/main/limit/menu.zip
-    unzip menu.zip
-    chmod +x menu/*
-    mv menu/* /usr/local/sbin
-    rm -rf menu
-    rm -rf menu.zip
-    rm -rf update.sh
+    wget -qO /tmp/menu.zip "https://raw.githubusercontent.com/BvsshXyz/bayuxd/main/limit/menu.zip"
+    mkdir -p /tmp/menu_extract
+    unzip -qo /tmp/menu.zip -d /tmp/menu_extract/
+    chmod +x /tmp/menu_extract/*
+    mv -f /tmp/menu_extract/* /usr/local/sbin/
+    cp -f /usr/local/sbin/menu /usr/bin/menu 2>/dev/null || true
+    rm -rf /tmp/menu_extract /tmp/menu.zip update.sh
 }
 netfilter-persistent
 clear

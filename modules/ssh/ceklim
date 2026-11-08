@@ -1,7 +1,7 @@
 #!/bin/bash
 # ====================================================
 #   BAYU XD TUNNELING SYSTEM - CHECK LOGIN USER SSH
-#   Precise 54-Column Modern Border & Live IP Audit
+#   Minimalist 54-Column Modern Clean Table
 # ====================================================
 
 C_BORDER="\033[1;36m"
@@ -16,9 +16,9 @@ NC="\033[0m"
 clear
 echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
 echo -e "${C_BORDER}│${C_HEAD}              MONITORING LOGIN USER SSH             ${C_BORDER}│${NC}"
-echo -e "${C_BORDER}├────┬──────────────────┬──────────┬──────────┬──────┤${NC}"
-echo -e "${C_BORDER}│${C_HEAD} NO ${C_BORDER}│${C_HEAD} USERNAME         ${C_BORDER}│${C_HEAD} LOGIN IP ${C_BORDER}│${C_HEAD} LIMIT IP ${C_BORDER}│${C_HEAD} STAT ${C_BORDER}│${NC}"
-echo -e "${C_BORDER}├────┼──────────────────┼──────────┼──────────┼──────┤${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD}  NO  USERNAME          LOGIN IP   LIMIT IP  STAT   ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│ ────────────────────────────────────────────────── │${NC}"
 
 # Ambil data login live dari dropbear dan sshd
 mulog=$(cekssh 2>/dev/null)
@@ -46,23 +46,23 @@ for user in "${data[@]}"; do
     
     if [ "$cekcek" -gt 0 ]; then
         ((online++))
-        status_tag="${C_VAL} ON ${NC}"
+        status_tag="${C_VAL}ON    ${NC}"
         login_str="${cekcek} IP"
     else
-        status_tag="${C_OFF}OFF ${NC}"
+        status_tag="${C_OFF}OFF   ${NC}"
         login_str="0 IP"
     fi
     
-    printf "${C_BORDER}│${C_NUM} %-2s ${C_BORDER}│${C_TEXT} %-16s ${C_BORDER}│${C_VAL} %-8s ${C_BORDER}│${C_CYAN} %-8s ${C_BORDER}│${status_tag}${C_BORDER}│${NC}\n" \
-        "$num_str" "${user:0:16}" "$login_str" "$iplimit"
+    printf "${C_BORDER}│${NC}  ${C_NUM}%-3s${NC} ${C_TEXT}%-17s${NC} ${C_VAL}%-10s${NC} ${C_CYAN}%-10s${NC}${status_tag}${C_BORDER}│${NC}\n" \
+        "$num_str" "${user:0:17}" "$login_str" "$iplimit"
 done
 
 if [ "$count" -eq 0 ]; then
-    printf "${C_BORDER}│${C_OFF}             TIDAK ADA AKUN SSH TERDAFTAR           ${C_BORDER}│${NC}\n"
+    printf "${C_BORDER}│${C_OFF}            TIDAK ADA AKUN SSH TERDAFTAR            ${C_BORDER}│${NC}\n"
 fi
 
-echo -e "${C_BORDER}├────┴──────────────────┴──────────┴──────────┴──────┤${NC}"
-printf "${C_BORDER}│${C_TEXT} Total: ${C_NUM}%-3s${C_TEXT} User   │ Online: ${C_VAL}%-2s${C_TEXT} User  │ Offline: ${C_OFF}%-3s${C_BORDER}│${NC}\n" \
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT}  Total: ${C_NUM}%-2s${C_TEXT} User        Online: ${C_VAL}%-2s${C_TEXT}       Offline: ${C_OFF}%-2s${C_BORDER}│${NC}\n" \
     "$count" "$online" "$((count - online))"
 echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
 echo ""
