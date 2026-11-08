@@ -66,22 +66,23 @@ URL="https://api.telegram.org/bot$KEY/sendMessage"
     echo -e ""
     read -p "  Input Menu Number : " exp
     
+    act_time=$(date +"%H:%M")
     if [[ ${exp} == '1' ]]; then
     exp2=`date -d "30 days" +"%Y-%m-%d"`
-    echo "### ${name} ${exp2} ${ip}" >> /root/ipvps/ip
+    echo "### ${name} ${exp2} ${act_time} ${ip}" >> /root/ipvps/ip
     elif [[ ${exp} == '2' ]]; then
     exp2=`date -d "60 days" +"%Y-%m-%d"`
-    echo "### ${name} ${exp2} ${ip}" >> /root/ipvps/ip
+    echo "### ${name} ${exp2} ${act_time} ${ip}" >> /root/ipvps/ip
     elif [[ ${exp} == '3' ]]; then
     exp2=`date -d "90 days" +"%Y-%m-%d"`
-    echo "### ${name} ${exp2} ${ip}" >> /root/ipvps/ip
+    echo "### ${name} ${exp2} ${act_time} ${ip}" >> /root/ipvps/ip
     elif [[ ${exp} == '4' ]]; then
     exp2="Lifetime"
     echo "### ${name} ${exp2} ${ip}" >> /root/ipvps/ip
     elif [[ ${exp} == '5' ]]; then
     read -p "Input Expired Days : " exp11
     exp2=`date -d "$exp11 days" +"%Y-%m-%d"`
-    echo "### ${name} ${exp2} ${ip}" >> /root/ipvps/ip
+    echo "### ${name} ${exp2} ${act_time} ${ip}" >> /root/ipvps/ip
     fi
     cd /root/ipvps
     git config --global user.email "${EMAIL}" &> /dev/null

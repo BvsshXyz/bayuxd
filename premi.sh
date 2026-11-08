@@ -126,25 +126,24 @@ function check_permission() {
 
     local CLIENT_NAME
     local EXP_DATE
-    CLIENT_NAME=$(echo "$CLIENT_DATA" | awk '{print $2}')
-    EXP_DATE=$(echo "$CLIENT_DATA" | awk '{print $3}')
-
-    local INSTALL_TIME
-    INSTALL_TIME=$(cat /etc/kyt/install_time 2>/dev/null)
-    if [[ -z "$INSTALL_TIME" ]]; then
-        INSTALL_TIME=$(date +"%H:%M")
-        mkdir -p /etc/kyt
-        echo "$INSTALL_TIME" > /etc/kyt/install_time
+    local EXP_TIME
+    read -r _pfx CLIENT_NAME col3 col4 col5 <<< "$CLIENT_DATA"
+    if [[ "$col4" == *":"* ]]; then
+        EXP_DATE="$col3"
+        EXP_TIME="$col4"
+    else
+        EXP_DATE="$col3"
+        EXP_TIME="23:59"
     fi
 
     local EXP_SHOW
     local EXP_TIMESTAMP
-    if [[ "$EXP_DATE" == *"Lifetime"* ]]; then
+    if [[ "$EXP_DATE" == *"Lifetime"* ]] || [[ "$CLIENT_NAME" == *"Lifetime"* ]]; then
         EXP_SHOW="Lifetime (VIP)"
         EXP_TIMESTAMP=0
     else
-        EXP_SHOW="${EXP_DATE} [${INSTALL_TIME}]"
-        local EXP_DATETIME="${EXP_DATE} ${INSTALL_TIME}"
+        EXP_SHOW="${EXP_DATE} [${EXP_TIME}]"
+        local EXP_DATETIME="${EXP_DATE} ${EXP_TIME}"
         EXP_TIMESTAMP=$(date -d "$EXP_DATETIME" +%s 2>/dev/null || date -d "$EXP_DATE" +%s 2>/dev/null || echo "0")
     fi
 
@@ -398,12 +397,31 @@ function make_folder_xray() {
 function install_xray() {
     clear
     print_install "Memasang Core Xray Modern"
-    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
+    mkdir -p /usr/local/bin /usr/local/etc/xray /usr/local/share/xray /etc/xray /var/log/xray
+
+    # Download Xray Core langsung dari mirror repo (anti-504 GitHub Release timeout)
+    wget -qO /tmp/xray.zip "${REPO}limit/xray.zip" 2>/dev/null
+    if [ -f /tmp/xray.zip ] && [ -s /tmp/xray.zip ]; then
+        mkdir -p /tmp/xray_extract
+        unzip -qo /tmp/xray.zip -d /tmp/xray_extract/
+        mv -f /tmp/xray_extract/xray /usr/local/bin/xray 2>/dev/null || true
+        mv -f /tmp/xray_extract/geoip.dat /usr/local/share/xray/ 2>/dev/null || true
+        mv -f /tmp/xray_extract/geosite.dat /usr/local/share/xray/ 2>/dev/null || true
+        rm -rf /tmp/xray.zip /tmp/xray_extract
+    fi
+
+    # Fallback jika binary belum ada
+    if [ ! -f /usr/local/bin/xray ]; then
+        bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install 2>/dev/null || true
+    fi
+
+    chmod +x /usr/local/bin/xray 2>/dev/null || true
+    id -u xray &>/dev/null || useradd -r -s /usr/sbin/nologin xray 2>/dev/null || true
+
     cp -f /root/mysc/limit/config.json /etc/xray/config.json
     domain=$(cat /root/domain | tr -d '\r\n ')
     sed -i "s/xxx/${domain}/g" /etc/xray/config.json
     chmod 644 /etc/xray/config.json
-    mkdir -p /usr/local/etc/xray /var/log/xray
     ln -sf /etc/xray/config.json /usr/local/etc/xray/config.json
 
     touch /var/log/xray/access.log /var/log/xray/error.log
