@@ -206,7 +206,7 @@ function is_root() {
 # Buat direktori xray
 print_install "Membuat direktori xray"
     mkdir -p /etc/xray
-    curl -s ifconfig.me > /etc/xray/ipvps
+    curl -s -4 ipv4.icanhazip.com 2>/dev/null || curl -s -4 ifconfig.me 2>/dev/null || wget -qO- -4 icanhazip.com 2>/dev/null > /etc/xray/ipvps
     touch /etc/xray/domain
     mkdir -p /var/log/xray
     chown www-data:www-data /var/log/xray

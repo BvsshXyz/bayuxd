@@ -21,18 +21,25 @@ C_GOLD="\033[1;38;5;214m"    # Gold
 NC="\033[0m"
 
 # Fast IPC Service Checks
-chk() {
-    if systemctl is-active --quiet "$1" 2>/dev/null; then
+chk_ssh() {
+    if systemctl is-active --quiet ws 2>/dev/null || systemctl is-active --quiet dropbear 2>/dev/null; then
+        echo -e "${C_ON}ON ${NC}"
+    else
+        echo -e "${C_OFF}OFF${NC}"
+    fi
+}
+chk_xray() {
+    if systemctl is-active --quiet xray 2>/dev/null || systemctl is-active --quiet runn 2>/dev/null; then
         echo -e "${C_ON}ON ${NC}"
     else
         echo -e "${C_OFF}OFF${NC}"
     fi
 }
 
-S_SSH=$(chk ws)
-S_VMESS=$(chk xray)
-S_VLESS=$(chk xray)
-S_TROJAN=$(chk xray)
+S_SSH=$(chk_ssh)
+S_VMESS=$(chk_xray)
+S_VLESS=$(chk_xray)
+S_TROJAN=$(chk_xray)
 
 # Hitung Total Akun Tiap Protokol Real-Time (FIX: Single Integer Output)
 TOTAL_SSH=$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd 2>/dev/null | wc -l)
@@ -42,12 +49,19 @@ TOTAL_TROJAN=$(grep -c -E "^#! " "/etc/xray/config.json" 2>/dev/null) || TOTAL_T
 
 # System Hardware & Identity
 DOMAIN=$(cat /etc/xray/domain 2>/dev/null || cat /root/domain 2>/dev/null || echo "vpn.bayuuvx.com")
-IP=$(cat /etc/xray/ipvps 2>/dev/null || cat /root/ipvps 2>/dev/null || echo "201.79.110.81")
+IP=$(cat /etc/xray/ipvps 2>/dev/null)
+if [[ "$IP" =~ : ]] || [[ -z "$IP" ]]; then
+    IP=$(curl -s -4 ipv4.icanhazip.com 2>/dev/null || curl -s -4 ifconfig.me 2>/dev/null || wget -qO- -4 icanhazip.com 2>/dev/null || echo "178.128.214.12")
+    echo "$IP" > /etc/xray/ipvps 2>/dev/null || true
+fi
+OS_RAW=$(cat /etc/os-release 2>/dev/null | grep -w PRETTY_NAME | cut -d= -f2 | tr -d '"' || echo "Ubuntu 24.04")
 RAM_USED=$(free -m | awk '/Mem:/ {print $3}')
 RAM_TOTAL=$(free -m | awk '/Mem:/ {print $2}')
 RAM_STR="${RAM_USED}/${RAM_TOTAL}M"
 UPTIME=$(uptime -p 2>/dev/null | sed 's/up //; s/ hours\?/h/; s/ minutes\?/m/; s/ days\?/d/' | cut -d, -f1-2 || echo "1h")
 KERNEL=$(uname -r | cut -d- -f1-2)
+ISP=$(cat /etc/xray/isp 2>/dev/null)
+[[ -z "$ISP" ]] && ISP="DigitalOcean, LLC"
 
 # License / Client Identity Info
 CLIENT_NAME="Bayu XD"
@@ -61,12 +75,15 @@ echo -e "${C_BORDER}│${C_TITLE}              BAYU XD TUNNELING SYSTEM         
 echo -e "${C_BORDER}│${C_SUB}           Premium Multi-Protocol Gateway           ${C_BORDER}│${NC}"
 echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
 echo -e "${C_BORDER}│${C_HEAD}                 SYSTEM INFORMATION                 ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT} %-16s: ${C_VAL}%-32s ${C_BORDER}│${NC}\n" "OS Linux" "${OS_RAW:0:32}"
+printf "${C_BORDER}│${C_TEXT} %-16s: ${C_VAL}%-32s ${C_BORDER}│${NC}\n" "Kernel Core" "${KERNEL:0:32}"
+printf "${C_BORDER}│${C_TEXT} %-16s: ${C_VAL}%-32s ${C_BORDER}│${NC}\n" "RAM Memory" "${RAM_STR:0:32}"
+printf "${C_BORDER}│${C_TEXT} %-16s: ${C_VAL}%-32s ${C_BORDER}│${NC}\n" "Uptime Server" "${UPTIME:0:32}"
+printf "${C_BORDER}│${C_TEXT} %-16s: ${C_VAL}%-32s ${C_BORDER}│${NC}\n" "IP VPS (IPv4)" "${IP:0:32}"
+printf "${C_BORDER}│${C_TEXT} %-16s: ${C_VAL}%-32s ${C_BORDER}│${NC}\n" "ISP Provider" "${ISP:0:32}"
+printf "${C_BORDER}│${C_TEXT} %-16s: ${C_TITLE}%-32s ${C_BORDER}│${NC}\n" "Domain Host" "${DOMAIN:0:32}"
 echo -e "${C_BORDER}├─────────────────────────┬──────────────────────────┤${NC}"
-printf "${C_BORDER}│${C_TEXT} OS     : ${C_VAL}%-15s${C_BORDER}│${C_TEXT} Core   : ${C_VAL}%-16s${C_BORDER}│${NC}\n" "Ubuntu 24.04" "$KERNEL"
-printf "${C_BORDER}│${C_TEXT} RAM    : ${C_VAL}%-15s${C_BORDER}│${C_TEXT} Uptime : ${C_VAL}%-16s${C_BORDER}│${NC}\n" "$RAM_STR" "$UPTIME"
-printf "${C_BORDER}│${C_TEXT} IP VPS : ${C_VAL}%-15s${C_BORDER}│${C_TEXT} ISP    : ${C_VAL}%-16s${C_BORDER}│${NC}\n" "$IP" "DigitalOcean"
-printf "${C_BORDER}│${C_TEXT} Domain : ${C_TITLE}%-42s${C_BORDER}│${NC}\n" "$DOMAIN"
-echo -e "${C_BORDER}├─────────────────────────┼──────────────────────────┤${NC}"
 echo -e "${C_BORDER}│${C_HEAD}     SERVICE STATUS      ${C_BORDER}│${C_HEAD}      TOTAL AKUN VPN      ${C_BORDER}│${NC}"
 echo -e "${C_BORDER}├─────────────────────────┼──────────────────────────┤${NC}"
 printf "${C_BORDER}│${C_TEXT} SSH-WS    : [${S_SSH}${C_TEXT}]       ${C_BORDER}│${C_TEXT} SSH Account    : ${C_VAL}%-2s User${C_BORDER} │${NC}\n" "$TOTAL_SSH"
