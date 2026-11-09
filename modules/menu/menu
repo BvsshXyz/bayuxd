@@ -134,13 +134,14 @@ printf "${C_BORDER}│${C_TEXT} Trojan-WS : [${S_TROJAN}${C_TEXT}]       ${C_BOR
 echo -e "${C_BORDER}├─────────────────────────┴──────────────────────────┤${NC}"
 echo -e "${C_BORDER}│${C_HEAD}                  MANAGEMENT MENU                   ${C_BORDER}│${NC}"
 echo -e "${C_BORDER}├─────────────────────────┬──────────────────────────┤${NC}"
-echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}01${C_TEXT}] SSH & WS Menu      ${C_BORDER}│${C_TEXT} [${C_NUM}05${C_TEXT}] Speedtest VPS       ${C_BORDER}│${NC}"
-echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}02${C_TEXT}] VMess Manager      ${C_BORDER}│${C_TEXT} [${C_NUM}06${C_TEXT}] Check Port          ${C_BORDER}│${NC}"
-echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}03${C_TEXT}] VLESS Manager      ${C_BORDER}│${C_TEXT} [${C_NUM}07${C_TEXT}] Reboot Server       ${C_BORDER}│${NC}"
-echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}04${C_TEXT}] Trojan Manager     ${C_BORDER}│${C_TEXT} [${C_NUM}08${C_TEXT}] Restart Service     ${C_BORDER}│${NC}"
-echo -e "${C_BORDER}├─────────────────────────┼──────────────────────────┤${NC}"
-echo -e "${C_BORDER}│${C_TEXT} [${C_HEAD}09${C_TEXT}] Renew SSL Cert     ${C_BORDER}│${C_TEXT} [${C_RED}00${C_TEXT}] Exit to Shell       ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}01${C_TEXT}] SSH & WS Menu      ${C_BORDER}│${C_TEXT} [${C_NUM}06${C_TEXT}] Check Port          ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}02${C_TEXT}] VMess Manager      ${C_BORDER}│${C_TEXT} [${C_NUM}07${C_TEXT}] Reboot Server       ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}03${C_TEXT}] VLESS Manager      ${C_BORDER}│${C_TEXT} [${C_NUM}08${C_TEXT}] Restart Service     ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}04${C_TEXT}] Trojan Manager     ${C_BORDER}│${C_TEXT} [${C_HEAD}09${C_TEXT}] Renew SSL Cert      ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}05${C_TEXT}] Speedtest VPS      ${C_BORDER}│${C_TEXT} [${C_CYAN}10${C_TEXT}] Update Autoscript   ${C_BORDER}│${NC}"
 echo -e "${C_BORDER}├─────────────────────────┴──────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_RED}00${C_TEXT}] Exit to Shell                                 ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
 echo -e "${C_BORDER}│${C_HEAD}            CLIENT & LICENSE INFORMATION            ${C_BORDER}│${NC}"
 echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
 printf "${C_BORDER}│${C_TEXT} %-16s: ${C_GOLD}%-32s ${C_BORDER}│${NC}\n" "Client Name" "${CLIENT_NAME:0:32}"
@@ -148,7 +149,7 @@ printf "${C_BORDER}│${C_TEXT} %-16s: ${C_ON}%-32s ${C_BORDER}│${NC}\n" "Lice
 printf "${C_BORDER}│${C_TEXT} %-16s: ${C_ON}%-32s ${C_BORDER}│${NC}\n" "Expired On" "${EXP_DAYS:0:32}"
 echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
 echo ""
-echo -ne "${C_TITLE}» Select Option ${C_VAL}[00-09]${C_TITLE}: ${NC}"
+echo -ne "${C_TITLE}» Select Option ${C_VAL}[00-10]${C_TITLE}: ${NC}"
 read -r opt
 
 case "$opt" in
@@ -172,6 +173,9 @@ case "$opt" in
         echo -e "\n${C_ON}SSL berhasil diperbarui!${NC}"
         sleep 1
         menu
+        ;;
+    10)
+        update
         ;;
     0|00|x|q)
         echo -e "\n${C_ON}Keluar ke terminal shell root.${NC}\n"
