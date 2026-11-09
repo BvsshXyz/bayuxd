@@ -1,43 +1,68 @@
 #!/bin/bash
 # ====================================================
 #   BAYU XD TUNNELING SYSTEM - CHECK LIVE SSH SESSIONS
-#   Outputs raw "PID - USER - IP" for Limit / Monitor
+#   Robust Multi-OS & Syslog/AuthLog Parser
 # ====================================================
 
-LOG="/var/log/auth.log"
-[ ! -f "$LOG" ] && [ -f "/var/log/secure" ] && LOG="/var/log/secure"
+# 1. Detect Real Public IP from Active WebSocket / HAProxy Sockets if 127.0.0.1
+get_real_ws_ip() {
+    local ws_ip
+    ws_ip=$(ss -tn state established '( sport = :80 or sport = :8080 or sport = :8880 or sport = :2082 or sport = :443 or sport = :10015 )' 2>/dev/null | \
+        awk '{print $4}' | cut -d: -f1 | grep -vE "^127\.0\.0\.1$|^$" | head -n 1)
+    if [ -n "$ws_ip" ]; then
+        echo "$ws_ip"
+    else
+        echo "127.0.0.1"
+    fi
+}
 
-# 1. Dropbear Active Sessions
-data=( $(ps aux | grep -i dropbear | grep -v grep | awk '{print $2}') )
-if [ -f "$LOG" ]; then
-    grep -i dropbear "$LOG" 2>/dev/null | grep -i "Password auth succeeded" > /tmp/login-db.txt
-    for PID in "${data[@]}"; do
-        grep "dropbear\[$PID\]" /tmp/login-db.txt 2>/dev/null > /tmp/login-db-pid.txt
-        NUM=$(wc -l < /tmp/login-db-pid.txt 2>/dev/null)
-        USER=$(awk '{print $10}' /tmp/login-db-pid.txt 2>/dev/null | tr -d "'")
-        IP=$(awk '{print $12}' /tmp/login-db-pid.txt 2>/dev/null | cut -d: -f1)
-        if [ "$NUM" -ge 1 ] && [ -n "$USER" ]; then
-            echo "$PID - $USER - $IP"
-        fi
-    done
+# 2. Gather Logs
+LOGS=()
+[ -f "/var/log/syslog" ] && LOGS+=("/var/log/syslog")
+[ -f "/var/log/auth.log" ] && LOGS+=("/var/log/auth.log")
+[ -f "/var/log/secure" ] && LOGS+=("/var/log/secure")
+
+# 3. Dropbear Active Sessions
+dropbear_listener=$(pgrep -f "dropbear -EF" -o 2>/dev/null || pgrep dropbear -o 2>/dev/null)
+if [ -n "$dropbear_listener" ]; then
+    child_pids=$(pgrep dropbear | grep -v "^${dropbear_listener}$" || true)
+    if [ -n "$child_pids" ] && [ "${#LOGS[@]}" -gt 0 ]; then
+        recent_logs=$(tail -n 2000 "${LOGS[@]}" 2>/dev/null)
+        for PID in $child_pids; do
+            auth_line=$(echo "$recent_logs" | grep -E "dropbear\[$PID\]" | grep -i "Password auth succeeded" | tail -n 1)
+            if [ -n "$auth_line" ]; then
+                USER=$(echo "$auth_line" | grep -o -E "for '[^']+'" | sed "s/for '//; s/'//")
+                IP=$(echo "$auth_line" | grep -o -E "from [^ :]+" | awk '{print $2}')
+                
+                if [ -n "$USER" ]; then
+                    if [ "$IP" = "127.0.0.1" ] || [ -z "$IP" ]; then
+                        IP=$(get_real_ws_ip)
+                    fi
+                    echo "$PID - $USER - $IP"
+                fi
+            fi
+        done
+    fi
 fi
 
-# 2. OpenSSH Active Sessions
-data_ssh=( $(ps aux | grep "sshd: " | grep "\[priv\]" | grep -v grep | awk '{print $2}') )
-if [ -f "$LOG" ]; then
-    grep -i sshd "$LOG" 2>/dev/null | grep -i "Accepted password for" > /tmp/login-sshd.txt
-    for PID in "${data_ssh[@]}"; do
-        grep "sshd\[$PID\]" /tmp/login-sshd.txt 2>/dev/null > /tmp/login-sshd-pid.txt
-        NUM=$(wc -l < /tmp/login-sshd-pid.txt 2>/dev/null)
-        USER=$(awk '{print $9}' /tmp/login-sshd-pid.txt 2>/dev/null | tr -d "'")
-        IP=$(awk '{print $11}' /tmp/login-sshd-pid.txt 2>/dev/null)
-        if [ "$NUM" -ge 1 ] && [ -n "$USER" ]; then
-            echo "$PID - $USER - $IP"
+# 4. OpenSSH Active Sessions
+data_ssh=$(ps aux | grep "sshd: " | grep -v grep | awk '{print $1, $2, $11, $12}')
+if [ -n "$data_ssh" ]; then
+    while read -r u_owner pid_val _cmd s_user; do
+        clean_user=$(echo "$s_user" | sed 's/@.*//; s/\[.*//; s/://')
+        if [ "$u_owner" != "root" ] && [ "$u_owner" != "sshd" ] && [ -n "$u_owner" ]; then
+            clean_user="$u_owner"
         fi
-    done
+        
+        if [ -n "$clean_user" ] && [ "$clean_user" != "root" ] && [ "$clean_user" != "sshd" ]; then
+            peer_ip=$(ss -tnp "sport = :22 or sport = :2222" 2>/dev/null | grep "pid=$pid_val" | awk '{print $4}' | cut -d: -f1)
+            [ -z "$peer_ip" ] && peer_ip="Direct"
+            echo "$pid_val - $clean_user - $peer_ip"
+        fi
+    done <<< "$data_ssh"
 fi
 
-# 3. OpenVPN Active Sessions
+# 5. OpenVPN Active Sessions
 if [ -f "/etc/openvpn/server/openvpn-tcp.log" ]; then
     grep -w "^CLIENT_LIST" /etc/openvpn/server/openvpn-tcp.log 2>/dev/null | while IFS=',' read -r _ vuser vip _; do
         [ -n "$vuser" ] && [ "$vuser" != "UNDEF" ] && echo "0 - $vuser - $vip"
@@ -48,5 +73,3 @@ if [ -f "/etc/openvpn/server/openvpn-udp.log" ]; then
         [ -n "$vuser" ] && [ "$vuser" != "UNDEF" ] && echo "0 - $vuser - $vip"
     done
 fi
-
-rm -f /tmp/login-db*.txt /tmp/login-sshd*.txt 2>/dev/null

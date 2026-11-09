@@ -831,6 +831,11 @@ cat >/etc/cron.d/xp_all <<-END
 		PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 		0 0 * * * root /usr/local/sbin/xp
 	END
+cat >/etc/cron.d/license_watchdog <<-END
+		SHELL=/bin/sh
+		PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+		* * * * * root /usr/local/sbin/license-watchdog >/dev/null 2>&1
+	END
 cat >/etc/cron.d/auto_backup <<-END
 		SHELL=/bin/sh
 		PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin

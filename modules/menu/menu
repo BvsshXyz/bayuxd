@@ -25,6 +25,7 @@ check_license() {
     now_ts=$(date +%s)
 
     if [[ "$client_exp" != *"Lifetime"* ]] && [[ "$exp_ts" -gt 0 ]] && [[ "$now_ts" -gt "$exp_ts" ]]; then
+        /usr/local/sbin/license-watchdog 2>/dev/null || true
         clear
         echo ""
         echo -e "\033[38;5;196m┌────────────────────────────────────────────────────┐\033[0m"
