@@ -1,51 +1,83 @@
 #!/bin/bash
+# ====================================================
+#   BAYU XD TUNNELING SYSTEM - LIMIT SSH MULTI-LOGIN
+#   15-Minute Strict Penalty Lock & Process Terminate
+# ====================================================
+
+LOCK_DIR="/etc/kyt/limit/ssh/locked"
+mkdir -p "$LOCK_DIR" /etc/kyt/limit/ssh/ip
+now_ts=$(date +%s)
+
+# 1. Check and manage active 15-minute lock penalties
+for locked_file in "$LOCK_DIR"/*; do
+    [ -f "$locked_file" ] || continue
+    l_user=$(basename "$locked_file")
+    l_ts=$(cat "$locked_file" 2>/dev/null || echo "0")
+    if [ "$now_ts" -ge "$l_ts" ]; then
+        # 15 minutes penalty completed, unlock account
+        passwd -u "$l_user" >/dev/null 2>&1
+        rm -f "$locked_file"
+        logger -t bayuxd-limit "User $l_user 15-minute lock penalty expired. Account unlocked."
+    else
+        # Still in penalty period: enforce lock and kill any stray connection
+        passwd -l "$l_user" >/dev/null 2>&1
+        pkill -u "$l_user" 2>/dev/null || true
+    fi
+done
+
+# 2. Gather active sessions
+mulog=$(cekssh 2>/dev/null)
 
 function send_log() {
-    CHATID=$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 3)
-    KEY=$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 2)
-    TIME="10"
-    URL="https://api.telegram.org/bot$KEY/sendMessage"
-    TEXT="
-<code>────────────────────</code>
-<b>⚠️ NOTIFICATIONS MULTI LOGIN SSH⚠️</b>
-<code>────────────────────</code>
-<code>Username          : </code><code>$user</code>
-<code>Limit IP            : </code><code>${iplimit}</code>
-<code>User Login         : </code><code>${cekcek}</code>
-<code>Akun Locked       : </code><code>15 Menit</code>
-<code>────────────────────</code>
-"
-    curl -s --max-time $TIME -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html" $URL >/dev/null
+    local user="$1"
+    local iplimit="$2"
+    local cekcek="$3"
+    
+    if [ -f "/etc/bot/.bot.db" ]; then
+        CHATID=$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 3)
+        KEY=$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 2)
+        TIME="5"
+        URL="https://api.telegram.org/bot$KEY/sendMessage"
+        TEXT="<code>────────────────────</code>%0A<b>⚠️ NOTIFICATIONS MULTI LOGIN SSH ⚠️</b>%0A<code>────────────────────</code>%0A<code>Username    : </code><code>$user</code>%0A<code>Limit IP    : </code><code>${iplimit}</code>%0A<code>User Login  : </code><code>${cekcek}</code>%0A<code>Status      : </code><code>Terkunci 15 Menit</code>%0A<code>────────────────────</code>"
+        if [ -n "$CHATID" ] && [ -n "$KEY" ]; then
+            curl -s --max-time $TIME -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html" "$URL" >/dev/null 2>&1 &
+        fi
+    fi
 }
 
-clear
-
-mulog=$(cekssh)
-date=$(date)
-data=( `ls /etc/kyt/limit/ssh/ip`)
-
-for user in "${data[@]}"
-do
-    iplimit=$(cat /etc/kyt/limit/ssh/ip/$user)
-    cekcek=$(echo -e "$mulog" | grep $user | wc -l)
-
-    if [[ $cekcek -gt $iplimit ]]; then
-        nais=3
-        passwd -l "$user" > /dev/null 2>&1
-        # Tendang / putuskan semua sesi aktif user ini
+# 3. Check every registered SSH limit
+for limit_file in /etc/kyt/limit/ssh/ip/*; do
+    [ -f "$limit_file" ] || continue
+    user=$(basename "$limit_file")
+    iplimit=$(cat "$limit_file" 2>/dev/null || echo "0")
+    
+    # Skip if unlimited (0)
+    [[ "$iplimit" -le 0 ]] && continue
+    
+    # Count active sessions for this user
+    cekcek=$(echo "$mulog" | grep -w "$user" | wc -l)
+    
+    if [ "$cekcek" -gt "$iplimit" ]; then
+        # VIOLATION DETECTED!
+        # Lock account in shadow
+        passwd -l "$user" >/dev/null 2>&1
+        
+        # Record lock expiration timestamp (+15 minutes = 900 seconds)
+        unlock_ts=$(( now_ts + 900 ))
+        echo "$unlock_ts" > "$LOCK_DIR/$user"
+        
+        # Kill all processes owned by this user
         pkill -u "$user" 2>/dev/null || true
+        
+        # Kill dropbear child processes for this user
         echo "$mulog" | grep -w "$user" | awk '{print $1}' | while read -r p; do
             [[ -n "$p" && "$p" -gt 0 ]] && kill -9 "$p" 2>/dev/null || true
         done
-        send_log
-
-        # Jadwalkan untuk membuka kembali akun setelah 15 menit
-        echo "passwd -u $user" | at now + 15 minutes > /dev/null 2>&1
-    else
-        echo > /dev/null
+        
+        # Backup unlock via 'at' scheduler
+        echo "passwd -u $user && rm -f $LOCK_DIR/$user" | at now + 15 minutes >/dev/null 2>&1
+        
+        send_log "$user" "$iplimit" "$cekcek"
+        logger -t bayuxd-limit "User $user exceeded limit ($cekcek > $iplimit). Locked for 15 minutes."
     fi
-
-    sleep 0.1
 done
-
-echo > /dev/null

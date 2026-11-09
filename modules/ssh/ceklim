@@ -44,7 +44,10 @@ for user in "${data[@]}"; do
         iplimit="${iplimit} IP"
     fi
     
-    if [ "$cekcek" -gt 0 ]; then
+    if [ -f "/etc/kyt/limit/ssh/locked/$user" ]; then
+        status_tag="${C_OFF}LOCKED  ${NC}"
+        login_str="0 IP"
+    elif [ "$cekcek" -gt 0 ]; then
         ((online++))
         status_tag="${C_VAL}ON      ${NC}"
         login_str="${cekcek} IP"

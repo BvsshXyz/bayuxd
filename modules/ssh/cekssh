@@ -7,7 +7,7 @@
 # 1. Detect Real Public IP from Active WebSocket / HAProxy Sockets if 127.0.0.1
 get_real_ws_ip() {
     local ws_ip
-    ws_ip=$(ss -tn state established '( sport = :80 or sport = :8080 or sport = :8880 or sport = :2082 or sport = :443 or sport = :10015 )' 2>/dev/null | \
+    ws_ip=$(ss -tnH state established '( sport = :80 or sport = :8080 or sport = :8880 or sport = :2082 or sport = :443 or sport = :10015 )' 2>/dev/null | \
         awk '{print $4}' | cut -d: -f1 | grep -vE "^127\.0\.0\.1$|^$" | head -n 1)
     if [ -n "$ws_ip" ]; then
         echo "$ws_ip"
