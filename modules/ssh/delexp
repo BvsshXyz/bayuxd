@@ -146,7 +146,7 @@ while true; do
     
     clear
     echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
-    printf "${C_BORDER}│${C_HEAD}            DAFTAR AKUN EXPIRED - %-17s${C_BORDER}│${NC}\n" "$proto_title"
+    printf "${C_BORDER}│${C_HEAD}             DAFTAR AKUN EXPIRED - %-17s${C_BORDER}│${NC}\n" "$proto_title"
     echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
     echo -e "${C_BORDER}│${C_HEAD}  NO  USERNAME        EXPIRED DATE      STATUS      ${C_BORDER}│${NC}"
     echo -e "${C_BORDER}│ ────────────────────────────────────────────────── │${NC}"
@@ -164,7 +164,7 @@ while true; do
     fi
     
     echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
-    printf "${C_BORDER}│${C_TEXT}  Total Akun Expired: ${C_OFF}%-2s User                         ${C_BORDER}│${NC}\n" "$total_exp"
+    printf "${C_BORDER}│${C_TEXT}  Total Akun Expired: ${C_OFF}%-2s${C_TEXT} User                       ${C_BORDER}│${NC}\n" "$total_exp"
     
     if [ "$total_exp" -gt 0 ]; then
         echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
@@ -172,7 +172,7 @@ while true; do
         echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
         echo -e "${C_BORDER}│${C_TEXT}  [${C_NUM}01${C_TEXT}] Hapus Semua Akun Expired Sekaligus           ${C_BORDER}│${NC}"
         echo -e "${C_BORDER}│${C_TEXT}  [${C_NUM}02${C_TEXT}] Hapus Akun Pilihan Tertentu (Pilih Nomor)    ${C_BORDER}│${NC}"
-        echo -e "${C_BORDER}│${C_TEXT}  [${C_RED}00${C_TEXT}] Kembali ke Menu                               ${C_BORDER}│${NC}"
+        echo -e "${C_BORDER}│${C_TEXT}  [${C_RED}00${C_TEXT}] Kembali ke Menu                              ${C_BORDER}│${NC}"
         echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
         echo ""
         echo -ne "${C_TITLE}» Pilih Tindakan [00-02]: ${C_VAL}"
