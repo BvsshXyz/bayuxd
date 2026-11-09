@@ -213,11 +213,11 @@ while true; do
                     read -r
                 fi
                 ;;
-            0|00|x|q)
+            0|00|x|q|"")
                 break
                 ;;
             *)
-                continue
+                break
                 ;;
         esac
     else
@@ -229,9 +229,4 @@ while true; do
     fi
 done
 
-case "$PROTO_LOWER" in
-    vmess) m-vmess 2>/dev/null || exit 0 ;;
-    vless) m-vless 2>/dev/null || exit 0 ;;
-    trojan) m-trojan 2>/dev/null || exit 0 ;;
-    *) m-sshws 2>/dev/null || exit 0 ;;
-esac
+exit 0

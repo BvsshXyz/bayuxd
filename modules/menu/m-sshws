@@ -41,7 +41,7 @@ case "$opt" in
     4|04) delssh ;;
     5|05) ceklim ; m-sshws ;;
     6|06) member ; m-sshws ;;
-    7|07) delexp ssh ;;
+    7|07) delexp ssh ; m-sshws ;;
     8|08) lock ; m-sshws ;;
     9|09) unlock ; m-sshws ;;
     10) ganti-ip ;;
