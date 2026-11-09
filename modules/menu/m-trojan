@@ -22,11 +22,11 @@ echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}01${C_TEXT}] Create Account     ${C_BO
 echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}02${C_TEXT}] Create Trial Acc   ${C_BORDER}│${C_TEXT} [${C_NUM}06${C_TEXT}] Check Config Akun   ${C_BORDER}│${NC}"
 echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}03${C_TEXT}] Renew / Perpanjang ${C_BORDER}│${C_TEXT} [${C_NUM}07${C_TEXT}] Edit Limit IP       ${C_BORDER}│${NC}"
 echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}04${C_TEXT}] Delete Account     ${C_BORDER}│${C_TEXT} [${C_NUM}08${C_TEXT}] Edit Limit Quota    ${C_BORDER}│${NC}"
-echo -e "${C_BORDER}├─────────────────────────┴──────────────────────────┤${NC}"
-echo -e "${C_BORDER}│${C_TEXT} [${C_HEAD}00${C_TEXT}] Kembali ke Menu Utama                         ${C_BORDER}│${NC}"
-echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+echo -e "${C_BORDER}├─────────────────────────┼──────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_TEXT} [${C_NUM}09${C_TEXT}] List Expired User  ${C_BORDER}│${C_TEXT} [${C_HEAD}00${C_TEXT}] Kembali ke Menu     ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}└─────────────────────────┴──────────────────────────┘${NC}"
 echo ""
-echo -ne "${C_TITLE}» Select Option ${C_VAL}[00-08]${C_TITLE}: ${NC}"
+echo -ne "${C_TITLE}» Select Option ${C_VAL}[00-09]${C_TITLE}: ${NC}"
 read -r opt
 
 case "$opt" in
@@ -38,6 +38,7 @@ case "$opt" in
     6|06) cat /var/www/html/trojan-*.txt 2>/dev/null || echo "Belum ada config tersimpan."; read -n 1 -s -r -p "Tekan [ Enter ]..."; m-trojan ;;
     7|07) ganti-ip-trojan 2>/dev/null || m-trojan ;;
     8|08) change-trojan-qouta 2>/dev/null || m-trojan ;;
-    0|00|9|09|x|q) menu ;;
+    9|09) delexp trojan ;;
+    0|00|x|q) menu ;;
     *) m-trojan ;;
 esac

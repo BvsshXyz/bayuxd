@@ -1,52 +1,237 @@
 #!/bin/bash
-# ==========================================
-# Color
-RED='\033[0;31m'
-NC='\033[0m'
-GREEN='\033[0;32m'
-ORANGE='\033[0;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-LIGHT='\033[0;37m'
-# ==========================================
-clear
-               hariini=`date +%d-%m-%Y`
-               echo "Thank you for removing the EXPIRED USERS"
-               echo "--------------------------------------"
-               cat /etc/shadow | cut -d: -f1,8 | sed /:$/d > /tmp/expirelist.txt
-               totalaccounts=`cat /tmp/expirelist.txt | wc -l`
-               for((i=1; i<=$totalaccounts; i++))
-               do
-               tuserval=`head -n $i /tmp/expirelist.txt | tail -n 1`
-               username=`echo $tuserval | cut -f1 -d:`
-               userexp=`echo $tuserval | cut -f2 -d:`
-               userexpireinseconds=$(($userexp * 86400 ))
-               tglexp=`date -d @$userexpireinseconds`             
-               tgl=`echo $tglexp |awk -F" " '{print $3}'`
-               while [ ${#tgl} -lt 2 ]
-               do
-               tgl="0"$tgl
-               done
-               while [ ${#username} -lt 15 ]
-               do
-               username=$username" " 
-               done
-               bulantahun=`echo $tglexp |awk -F" " '{print $2,$6}'`
-               echo "echo "Expired- User : $username Expire at : $tgl $bulantahun"" >> /usr/local/bin/alluser
-               todaystime=`date +%s`
-               if [ $userexpireinseconds -ge $todaystime ] ;
-               then
-		    	:
-               else
-               echo "echo "Expired- Username : $username are expired at: $tgl $bulantahun and removed : $hariini "" >> /usr/local/bin/deleteduser
-	           echo "Username $username that are expired at $tgl $bulantahun removed from the VPS $hariini"
-               userdel $username
-               fi
-               done
-               echo " "
-               echo "--------------------------------------"
-               echo "Script are successfully run"
-echo -e "back to menu on 2 second"
-sleep 2
-menu               
+# ====================================================
+#   BAYU XD TUNNELING SYSTEM - EXPIRED ACCOUNTS MANAGER
+#   54-Column Modern Table & Safe Multi-Protocol Cleanup
+# ====================================================
+
+C_BORDER="\033[1;36m"
+C_HEAD="\033[1;37m"
+C_TEXT="\033[0;37m"
+C_VAL="\033[1;32m"
+C_OFF="\033[1;31m"
+C_NUM="\033[1;33m"
+C_CYAN="\033[0;36m"
+C_TITLE="\033[1;38;5;51m"
+NC="\033[0m"
+
+PROTO="${1:-ssh}"
+PROTO_LOWER=$(echo "$PROTO" | tr '[:upper:]' '[:lower:]')
+now_ts=$(date +%s)
+
+parse_exp_epoch() {
+    local raw="$1"
+    python3 -c "
+import re, datetime
+raw = '''$raw'''
+if not raw or 'Lifetime' in raw:
+    print(0)
+    exit()
+
+m = re.search(r'(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})', raw)
+if m:
+    try:
+        dt = datetime.datetime.strptime(f'{m.group(1)} {m.group(2)}', '%Y-%m-%d %H:%M')
+        print(int(dt.timestamp()))
+        exit()
+    except Exception:
+        pass
+
+m = re.search(r'(\d{4}-\d{2}-\d{2})', raw)
+if m:
+    try:
+        dt = datetime.datetime.strptime(m.group(1), '%Y-%m-%d')
+        print(int(dt.timestamp()) + 86399)
+        exit()
+    except Exception:
+        pass
+
+m = re.search(r'(\d{1,2})\s+([A-Za-z]{3}),\s+(\d{4})', raw)
+if m:
+    try:
+        dt = datetime.datetime.strptime(f'{m.group(1)} {m.group(2)} {m.group(3)}', '%d %b %Y')
+        print(int(dt.timestamp()) + 86399)
+        exit()
+    except Exception:
+        pass
+
+print(0)
+" 2>/dev/null || echo "0"
+}
+
+get_expired_users() {
+    local p="$1"
+    exp_users=()
+    exp_dates=()
+    
+    if [ "$p" = "ssh" ]; then
+        mapfile -t users < <(awk -F: '$3>=1000 && $1!="nobody" {print $1}' /etc/passwd 2>/dev/null)
+        for u in "${users[@]}"; do
+            [[ "$u" =~ ^trial ]] && continue
+            raw_exp=$(grep -wE "^### $u" /etc/ssh/.ssh.db 2>/dev/null | awk '{print $3, $4}')
+            if [ -z "$raw_exp" ]; then
+                raw_exp=$(python3 /usr/local/bin/get_account_exp.py "$u" "ssh" 2>/dev/null)
+            fi
+            
+            exp_epoch=$(parse_exp_epoch "$raw_exp")
+            if [ "$exp_epoch" -gt 0 ] && [ "$now_ts" -ge "$exp_epoch" ]; then
+                exp_users+=("$u")
+                exp_dates+=("${raw_exp:0:16}")
+            fi
+        done
+    elif [ "$p" = "vmess" ]; then
+        mapfile -t users < <(grep -E "^### " "/etc/xray/config.json" 2>/dev/null | awk '{print $2}' | sort -u)
+        for u in "${users[@]}"; do
+            raw_exp=$(grep -wE "^### $u" /etc/vmess/.vmess.db 2>/dev/null | awk '{print $3, $4}')
+            [ -z "$raw_exp" ] && raw_exp=$(grep -wE "^### $u" /etc/xray/config.json 2>/dev/null | awk '{print $3}')
+            exp_epoch=$(parse_exp_epoch "$raw_exp")
+            if [ "$exp_epoch" -gt 0 ] && [ "$now_ts" -ge "$exp_epoch" ]; then
+                exp_users+=("$u")
+                exp_dates+=("${raw_exp:0:16}")
+            fi
+        done
+    elif [ "$p" = "vless" ]; then
+        mapfile -t users < <(grep -E "^#& " "/etc/xray/config.json" 2>/dev/null | awk '{print $2}' | sort -u)
+        for u in "${users[@]}"; do
+            raw_exp=$(grep -wE "^#& $u" /etc/vless/.vless.db 2>/dev/null | awk '{print $3, $4}')
+            [ -z "$raw_exp" ] && raw_exp=$(grep -wE "^#& $u" /etc/xray/config.json 2>/dev/null | awk '{print $3}')
+            exp_epoch=$(parse_exp_epoch "$raw_exp")
+            if [ "$exp_epoch" -gt 0 ] && [ "$now_ts" -ge "$exp_epoch" ]; then
+                exp_users+=("$u")
+                exp_dates+=("${raw_exp:0:16}")
+            fi
+        done
+    elif [ "$p" = "trojan" ]; then
+        mapfile -t users < <(grep -E "^#! " "/etc/xray/config.json" 2>/dev/null | awk '{print $2}' | sort -u)
+        for u in "${users[@]}"; do
+            raw_exp=$(grep -wE "^#! $u" /etc/trojan/.trojan.db 2>/dev/null | awk '{print $3, $4}')
+            [ -z "$raw_exp" ] && raw_exp=$(grep -wE "^#! $u" /etc/xray/config.json 2>/dev/null | awk '{print $3}')
+            exp_epoch=$(parse_exp_epoch "$raw_exp")
+            if [ "$exp_epoch" -gt 0 ] && [ "$now_ts" -ge "$exp_epoch" ]; then
+                exp_users+=("$u")
+                exp_dates+=("${raw_exp:0:16}")
+            fi
+        done
+    fi
+}
+
+delete_single_user() {
+    local p="$1"
+    local u="$2"
+    if [ "$p" = "ssh" ]; then
+        userdel -f -r "$u" 2>/dev/null || userdel -f "$u" 2>/dev/null || true
+        sed -i "/\b${u}\b/d" /etc/ssh/.ssh.db 2>/dev/null || true
+        rm -f "/etc/kyt/limit/ssh/ip/$u" "/var/www/html/ssh-$u.txt" "/etc/kyt/limit/ssh/locked/$u"
+    elif [ "$p" = "vmess" ]; then
+        sed -i "/^### $u /,/^},{/d" /etc/xray/config.json 2>/dev/null
+        sed -i "/### $u /d" /etc/vmess/.vmess.db 2>/dev/null
+        rm -f "/etc/kyt/limit/vmess/ip/$u" "/etc/vmess/$u" "/etc/limit/vmess/$u" "/var/www/html/vmess-$u.txt"
+        systemctl restart xray 2>/dev/null || true
+    elif [ "$p" = "vless" ]; then
+        sed -i "/^#& $u /,/^},{/d" /etc/xray/config.json 2>/dev/null
+        sed -i "/#& $u /d" /etc/vless/.vless.db 2>/dev/null
+        rm -f "/etc/kyt/limit/vless/ip/$u" "/etc/vless/$u" "/etc/limit/vless/$u" "/var/www/html/vless-$u.txt"
+        systemctl restart xray 2>/dev/null || true
+    elif [ "$p" = "trojan" ]; then
+        sed -i "/^#! $u /,/^},{/d" /etc/xray/config.json 2>/dev/null
+        sed -i "/#! $u /d" /etc/trojan/.trojan.db 2>/dev/null
+        rm -f "/etc/kyt/limit/trojan/ip/$u" "/etc/trojan/$u" "/etc/limit/trojan/$u" "/var/www/html/trojan-$u.txt"
+        systemctl restart xray 2>/dev/null || true
+    fi
+}
+
+while true; do
+    get_expired_users "$PROTO_LOWER"
+    total_exp=${#exp_users[@]}
+    proto_title=$(echo "$PROTO_LOWER" | tr '[:lower:]' '[:upper:]')
+    
+    clear
+    echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+    printf "${C_BORDER}│${C_HEAD}            DAFTAR AKUN EXPIRED - %-17s${C_BORDER}│${NC}\n" "$proto_title"
+    echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+    echo -e "${C_BORDER}│${C_HEAD}  NO  USERNAME        EXPIRED DATE      STATUS      ${C_BORDER}│${NC}"
+    echo -e "${C_BORDER}│ ────────────────────────────────────────────────── │${NC}"
+    
+    if [ "$total_exp" -eq 0 ]; then
+        echo -e "${C_BORDER}│${C_VAL}      TIDAK ADA AKUN EXPIRED DI SERVER SAAT INI     ${C_BORDER}│${NC}"
+    else
+        for (( i=0; i<total_exp; i++ )); do
+            num_str=$(printf "%02d" $((i + 1)))
+            u_name="${exp_users[$i]}"
+            u_exp="${exp_dates[$i]}"
+            printf "${C_BORDER}│${NC}  ${C_NUM}%-4s${NC}${C_TEXT}%-16s${NC}${C_CYAN}%-18s${NC}${C_OFF}%-10s${NC}  ${C_BORDER}│${NC}\n" \
+                "$num_str" "${u_name:0:16}" "${u_exp:0:18}" "EXPIRED"
+        done
+    fi
+    
+    echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+    printf "${C_BORDER}│${C_TEXT}  Total Akun Expired: ${C_OFF}%-2s User                         ${C_BORDER}│${NC}\n" "$total_exp"
+    
+    if [ "$total_exp" -gt 0 ]; then
+        echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+        echo -e "${C_BORDER}│${C_HEAD}                  OPSI TINDAKAN                     ${C_BORDER}│${NC}"
+        echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+        echo -e "${C_BORDER}│${C_TEXT}  [${C_NUM}01${C_TEXT}] Hapus Semua Akun Expired Sekaligus           ${C_BORDER}│${NC}"
+        echo -e "${C_BORDER}│${C_TEXT}  [${C_NUM}02${C_TEXT}] Hapus Akun Pilihan Tertentu (Pilih Nomor)    ${C_BORDER}│${NC}"
+        echo -e "${C_BORDER}│${C_TEXT}  [${C_RED}00${C_TEXT}] Kembali ke Menu                               ${C_BORDER}│${NC}"
+        echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+        echo ""
+        echo -ne "${C_TITLE}» Pilih Tindakan [00-02]: ${C_VAL}"
+        read -r action
+        
+        case "$action" in
+            1|01)
+                for u in "${exp_users[@]}"; do
+                    delete_single_user "$PROTO_LOWER" "$u"
+                done
+                clear
+                echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+                echo -e "${C_BORDER}│${C_VAL}        SEMUA AKUN EXPIRED BERHASIL DIHAPUS!        ${C_BORDER}│${NC}"
+                echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+                printf "${C_BORDER}│${C_TEXT}  Jumlah akun yang dibersihkan: ${C_NUM}%-20s${C_BORDER}│${NC}\n" "$total_exp Akun"
+                echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+                echo ""
+                echo -ne "${C_CYAN}Tekan [ Enter ] untuk melanjutkan...${NC}"
+                read -r
+                ;;
+            2|02)
+                echo ""
+                echo -ne "${C_TITLE}» Masukkan Nomor Akun yang ingin dihapus [01-${total_exp}]: ${C_VAL}"
+                read -r pick
+                if [[ "$pick" =~ ^[0-9]+$ ]] && [ "$pick" -ge 1 ] && [ "$pick" -le "$total_exp" ]; then
+                    idx=$(( pick - 1 ))
+                    del_u="${exp_users[$idx]}"
+                    delete_single_user "$PROTO_LOWER" "$del_u"
+                    clear
+                    echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+                    echo -e "${C_BORDER}│${C_VAL}            AKUN BERHASIL DIHAPUS!                  ${C_BORDER}│${NC}"
+                    echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+                    printf "${C_BORDER}│${C_TEXT}  Username : ${C_VAL}%-39s${C_BORDER}│${NC}\n" "$del_u"
+                    printf "${C_BORDER}│${C_TEXT}  Protokol : ${C_CYAN}%-39s${C_BORDER}│${NC}\n" "$proto_title"
+                    echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+                    echo ""
+                    echo -ne "${C_CYAN}Tekan [ Enter ] untuk melanjutkan...${NC}"
+                    read -r
+                fi
+                ;;
+            0|00|x|q)
+                break
+                ;;
+            *)
+                continue
+                ;;
+        esac
+    else
+        echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+        echo ""
+        echo -ne "${C_CYAN}Tekan [ Enter ] untuk kembali ke menu...${NC}"
+        read -r
+        break
+    fi
+done
+
+case "$PROTO_LOWER" in
+    vmess) m-vmess 2>/dev/null || exit 0 ;;
+    vless) m-vless 2>/dev/null || exit 0 ;;
+    trojan) m-trojan 2>/dev/null || exit 0 ;;
+    *) m-sshws 2>/dev/null || exit 0 ;;
+esac
