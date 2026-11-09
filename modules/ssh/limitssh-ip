@@ -31,11 +31,16 @@ do
 
     if [[ $cekcek -gt $iplimit ]]; then
         nais=3
-        passwd -l "$user" > /dev/null
+        passwd -l "$user" > /dev/null 2>&1
+        # Tendang / putuskan semua sesi aktif user ini
+        pkill -u "$user" 2>/dev/null || true
+        echo "$mulog" | grep -w "$user" | awk '{print $1}' | while read -r p; do
+            [[ -n "$p" && "$p" -gt 0 ]] && kill -9 "$p" 2>/dev/null || true
+        done
         send_log
 
         # Jadwalkan untuk membuka kembali akun setelah 15 menit
-        echo "passwd -u $user" | at now + 15 minutes > /dev/null
+        echo "passwd -u $user" | at now + 15 minutes > /dev/null 2>&1
     else
         echo > /dev/null
     fi
