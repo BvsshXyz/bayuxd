@@ -35,9 +35,9 @@ case "$opt" in
     3|03) renewws ;;
     4|04) delws ;;
     5|05) cekws ; m-vmess ;;
-    6|06) cat /var/www/html/vmess-*.txt 2>/dev/null || echo "Belum ada config tersimpan."; read -n 1 -s -r -p "Tekan [ Enter ]..."; m-vmess ;;
+    6|06) user-ws ;;
     7|07) ganti-ip-vmess 2>/dev/null || m-vmess ;;
-    8|08) change-vmess-qouta 2>/dev/null || m-vmess ;;
+    8|08) ganti-quota vmess ; m-vmess ;;
     9|09) delexp vmess ; m-vmess ;;
     0|00|x|q) menu ;;
     *) m-vmess ;;

@@ -82,9 +82,9 @@ S_TROJAN=$(chk_xray)
 
 # Hitung Total Akun Tiap Protokol Real-Time (FIX: Single Integer Output)
 TOTAL_SSH=$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd 2>/dev/null | wc -l)
-TOTAL_VMESS=$(grep -c -E "^### " "/etc/xray/config.json" 2>/dev/null) || TOTAL_VMESS=0
-TOTAL_VLESS=$(grep -c -E "^#& " "/etc/xray/config.json" 2>/dev/null) || TOTAL_VLESS=0
-TOTAL_TROJAN=$(grep -c -E "^#! " "/etc/xray/config.json" 2>/dev/null) || TOTAL_TROJAN=0
+TOTAL_VMESS=$(grep -E "^### " "/etc/vmess/.vmess.db" 2>/dev/null | grep -v "admin@vmess" | awk '{print $2}' | sort -u | wc -l)
+TOTAL_VLESS=$(grep -E "^#& " "/etc/vless/.vless.db" 2>/dev/null | grep -v "admin@vless" | awk '{print $2}' | sort -u | wc -l)
+TOTAL_TROJAN=$(grep -E "^#! " "/etc/trojan/.trojan.db" 2>/dev/null | grep -v "admin@trojan" | awk '{print $2}' | sort -u | wc -l)
 
 # System Hardware & Identity
 DOMAIN=$(cat /etc/xray/domain 2>/dev/null || cat /root/domain 2>/dev/null || echo "vpn.bayuuvx.com")
@@ -160,9 +160,27 @@ case "$opt" in
     6|06) netstat -tulpn | grep LISTEN || ss -tulpn ; read -rp "Tekan Enter..." ; menu ;;
     7|07) reboot ;;
     8|08) 
-        systemctl restart ws dropbear nginx haproxy xray 2>/dev/null
-        echo -e "\n${C_ON}Service berhasil di-restart!${NC}"
-        sleep 1
+        clear
+        echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+        echo -e "${C_BORDER}│${C_TITLE}             RESTARTING CORE SERVICES               ${C_BORDER}│${NC}"
+        echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+        services=("ws:SSH-WS Service" "dropbear:Dropbear Server" "nginx:Nginx Web Server" "haproxy:HAProxy Multiplexer" "xray:Xray Core Service")
+        for s_entry in "${services[@]}"; do
+            s_name="${s_entry%%:*}"
+            s_desc="${s_entry##*:}"
+            printf "${C_BORDER}│${C_TEXT}  %-30s : ${C_GOLD}Restarting... ${C_BORDER}│${NC}\r" "$s_desc"
+            systemctl restart "$s_name" 2>/dev/null
+            sleep 0.4
+            if systemctl is-active --quiet "$s_name" 2>/dev/null; then
+                printf "${C_BORDER}│${C_TEXT}  %-30s : ${C_ON}[✓] ACTIVE    ${C_BORDER}│${NC}\n" "$s_desc"
+            else
+                printf "${C_BORDER}│${C_TEXT}  %-30s : ${C_OFF}[×] FAILED    ${C_BORDER}│${NC}\n" "$s_desc"
+            fi
+        done
+        echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+        echo ""
+        echo -ne "${C_TITLE}Tekan [ Enter ] untuk kembali ke menu...${NC}"
+        read -r
         menu
         ;;
     9|09)

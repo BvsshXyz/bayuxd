@@ -94,6 +94,68 @@
           "path": "/trojan"
         }
       }
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": 10005,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "1d1c1d94-6987-4658-a4dc-8821a30fe7e0",
+            "level": 0,
+            "email": "admin@vless-grpc"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "grpc",
+        "grpcSettings": {
+          "serviceName": "vless-grpc"
+        }
+      }
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": 10006,
+      "protocol": "vmess",
+      "settings": {
+        "clients": [
+          {
+            "id": "e8ce0eb1-0a09-4b52-85c4-f9778093298b",
+            "alterId": 0,
+            "level": 0,
+            "email": "admin@vmess-grpc"
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "grpc",
+        "grpcSettings": {
+          "serviceName": "vmess-grpc"
+        }
+      }
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": 10007,
+      "protocol": "trojan",
+      "settings": {
+        "clients": [
+          {
+            "password": "e8ce0eb1-0a09-4b52-85c4-f9778093298b",
+            "level": 0,
+            "email": "admin@trojan-grpc"
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "grpc",
+        "grpcSettings": {
+          "serviceName": "trojan-grpc"
+        }
+      }
     }
   ],
   "outbounds": [

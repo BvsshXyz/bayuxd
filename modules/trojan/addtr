@@ -112,7 +112,8 @@ with open('/etc/xray/config.json', 'w') as f:
     json.dump(d, f, indent=2)
 "
 
-sed -i "/\"email\": \"$user\"/i\\      #! $user $exp" /etc/xray/config.json 2>/dev/null || true
+# Jangan sisipkan komentar ke JSON agar config.json tetap valid!
+sed -i "/^#! $user /d" /etc/trojan/.trojan.db 2>/dev/null || true
 
 mkdir -p /etc/kyt/limit/trojan/ip /etc/kyt/limit/trojan/quota /etc/trojan /etc/limit/trojan
 if [[ "$iplimit" -gt 0 ]]; then
@@ -129,6 +130,8 @@ echo "#! $user $exp $uuid $Quota $iplimit" >> /etc/trojan/.trojan.db
 systemctl restart xray 2>/dev/null
 
 trojan_link="trojan://${uuid}@${domain}:443?path=%2Ftrojan&security=tls&host=${domain}&type=ws&sni=${domain}#${user}"
+trojan_link_nontls="trojan://${uuid}@${domain}:80?path=%2Ftrojan&security=none&host=${domain}&type=ws#${user}"
+trojan_link_grpc="trojan://${uuid}@${domain}:443?mode=gun&security=tls&type=grpc&serviceName=trojan-grpc&sni=${domain}#${user}"
 
 mkdir -p /var/www/html
 cat << EOF > "/var/www/html/trojan-${user}.txt"
@@ -147,6 +150,12 @@ Expired On   : ${expe}
 ====================================================
 Trojan WS TLS (Port 443):
 ${trojan_link}
+====================================================
+Trojan WS Non-TLS (Port 80):
+${trojan_link_nontls}
+====================================================
+Trojan gRPC (Port 443):
+${trojan_link_grpc}
 ====================================================
 EOF
 
@@ -173,9 +182,18 @@ printf "${C_BORDER}│${C_TEXT} Masa Aktif  : ${C_VAL}%-37s${C_BORDER}│${NC}\n
 printf "${C_BORDER}│${C_TEXT} Expired On  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "$expe"
 echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
 echo -e "${C_BORDER}│${C_HEAD} TROJAN WS TLS (PORT 443):                           ${C_BORDER}│${NC}"
+echo -e "${C_SUB}${trojan_link}${NC}"
 echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
-print_boxed_content "$trojan_link"
+echo -e "${C_BORDER}│${C_HEAD} TROJAN WS NON-TLS (PORT 80):                        ${C_BORDER}│${NC}"
+echo -e "${C_SUB}${trojan_link_nontls}${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} TROJAN GRPC TLS (PORT 443):                         ${C_BORDER}│${NC}"
+echo -e "${C_SUB}${trojan_link_grpc}${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT}  Link Simpan Akun:                                  ${C_BORDER}│${NC}\n"
+printf "${C_BORDER}│${C_CYAN}  https://${domain}:81/trojan-${user}.txt            ${C_BORDER}│${NC}\n"
 echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
 echo ""
-read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
-menu
+echo -ne "${C_TITLE}Tekan [ Enter ] untuk kembali ke menu...${NC}"
+read -r
+m-trojan

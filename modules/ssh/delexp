@@ -80,10 +80,9 @@ get_expired_users() {
             fi
         done
     elif [ "$p" = "vmess" ]; then
-        mapfile -t users < <(grep -E "^### " "/etc/xray/config.json" 2>/dev/null | awk '{print $2}' | sort -u)
+        mapfile -t users < <(grep -E "^### " "/etc/vmess/.vmess.db" 2>/dev/null | grep -v "admin@vmess" | awk '{print $2}' | sort -u)
         for u in "${users[@]}"; do
             raw_exp=$(grep -wE "^### $u" /etc/vmess/.vmess.db 2>/dev/null | awk '{print $3, $4}')
-            [ -z "$raw_exp" ] && raw_exp=$(grep -wE "^### $u" /etc/xray/config.json 2>/dev/null | awk '{print $3}')
             exp_epoch=$(parse_exp_epoch "$raw_exp")
             if [ "$exp_epoch" -gt 0 ] && [ "$now_ts" -ge "$exp_epoch" ]; then
                 exp_users+=("$u")
@@ -91,10 +90,9 @@ get_expired_users() {
             fi
         done
     elif [ "$p" = "vless" ]; then
-        mapfile -t users < <(grep -E "^#& " "/etc/xray/config.json" 2>/dev/null | awk '{print $2}' | sort -u)
+        mapfile -t users < <(grep -E "^#& " "/etc/vless/.vless.db" 2>/dev/null | grep -v "admin@vless" | awk '{print $2}' | sort -u)
         for u in "${users[@]}"; do
             raw_exp=$(grep -wE "^#& $u" /etc/vless/.vless.db 2>/dev/null | awk '{print $3, $4}')
-            [ -z "$raw_exp" ] && raw_exp=$(grep -wE "^#& $u" /etc/xray/config.json 2>/dev/null | awk '{print $3}')
             exp_epoch=$(parse_exp_epoch "$raw_exp")
             if [ "$exp_epoch" -gt 0 ] && [ "$now_ts" -ge "$exp_epoch" ]; then
                 exp_users+=("$u")
@@ -102,10 +100,9 @@ get_expired_users() {
             fi
         done
     elif [ "$p" = "trojan" ]; then
-        mapfile -t users < <(grep -E "^#! " "/etc/xray/config.json" 2>/dev/null | awk '{print $2}' | sort -u)
+        mapfile -t users < <(grep -E "^#! " "/etc/trojan/.trojan.db" 2>/dev/null | grep -v "admin@trojan" | awk '{print $2}' | sort -u)
         for u in "${users[@]}"; do
             raw_exp=$(grep -wE "^#! $u" /etc/trojan/.trojan.db 2>/dev/null | awk '{print $3, $4}')
-            [ -z "$raw_exp" ] && raw_exp=$(grep -wE "^#! $u" /etc/xray/config.json 2>/dev/null | awk '{print $3}')
             exp_epoch=$(parse_exp_epoch "$raw_exp")
             if [ "$exp_epoch" -gt 0 ] && [ "$now_ts" -ge "$exp_epoch" ]; then
                 exp_users+=("$u")
@@ -123,17 +120,44 @@ delete_single_user() {
         sed -i "/\b${u}\b/d" /etc/ssh/.ssh.db 2>/dev/null || true
         rm -f "/etc/kyt/limit/ssh/ip/$u" "/var/www/html/ssh-$u.txt" "/etc/kyt/limit/ssh/locked/$u"
     elif [ "$p" = "vmess" ]; then
-        sed -i "/^### $u /,/^},{/d" /etc/xray/config.json 2>/dev/null
+        python3 -c "
+import json
+with open('/etc/xray/config.json') as f:
+    d = json.load(f)
+for ib in d.get('inbounds', []):
+    if ib.get('protocol') == 'vmess':
+        ib['settings']['clients'] = [c for c in ib.get('settings', {}).get('clients', []) if c.get('email') != '$u']
+with open('/etc/xray/config.json', 'w') as f:
+    json.dump(d, f, indent=2)
+" 2>/dev/null || true
         sed -i "/### $u /d" /etc/vmess/.vmess.db 2>/dev/null
         rm -f "/etc/kyt/limit/vmess/ip/$u" "/etc/vmess/$u" "/etc/limit/vmess/$u" "/var/www/html/vmess-$u.txt"
         systemctl restart xray 2>/dev/null || true
     elif [ "$p" = "vless" ]; then
-        sed -i "/^#& $u /,/^},{/d" /etc/xray/config.json 2>/dev/null
+        python3 -c "
+import json
+with open('/etc/xray/config.json') as f:
+    d = json.load(f)
+for ib in d.get('inbounds', []):
+    if ib.get('protocol') == 'vless':
+        ib['settings']['clients'] = [c for c in ib.get('settings', {}).get('clients', []) if c.get('email') != '$u']
+with open('/etc/xray/config.json', 'w') as f:
+    json.dump(d, f, indent=2)
+" 2>/dev/null || true
         sed -i "/#& $u /d" /etc/vless/.vless.db 2>/dev/null
         rm -f "/etc/kyt/limit/vless/ip/$u" "/etc/vless/$u" "/etc/limit/vless/$u" "/var/www/html/vless-$u.txt"
         systemctl restart xray 2>/dev/null || true
     elif [ "$p" = "trojan" ]; then
-        sed -i "/^#! $u /,/^},{/d" /etc/xray/config.json 2>/dev/null
+        python3 -c "
+import json
+with open('/etc/xray/config.json') as f:
+    d = json.load(f)
+for ib in d.get('inbounds', []):
+    if ib.get('protocol') == 'trojan':
+        ib['settings']['clients'] = [c for c in ib.get('settings', {}).get('clients', []) if c.get('email') != '$u']
+with open('/etc/xray/config.json', 'w') as f:
+    json.dump(d, f, indent=2)
+" 2>/dev/null || true
         sed -i "/#! $u /d" /etc/trojan/.trojan.db 2>/dev/null
         rm -f "/etc/kyt/limit/trojan/ip/$u" "/etc/trojan/$u" "/etc/limit/trojan/$u" "/var/www/html/trojan-$u.txt"
         systemctl restart xray 2>/dev/null || true

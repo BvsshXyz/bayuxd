@@ -80,7 +80,6 @@ for ib in d.get('inbounds', []):
 with open('/etc/xray/config.json', 'w') as f:
     json.dump(d, f, indent=2)
 "
-sed -i "/### $target_user /d" /etc/xray/config.json 2>/dev/null || true
 sed -i "/### $target_user /d" /etc/vmess/.vmess.db 2>/dev/null || true
 rm -f "/etc/kyt/limit/vmess/ip/$target_user" "/etc/vmess/$target_user" "/etc/limit/vmess/$target_user" "/var/www/html/vmess-$target_user.txt"
 systemctl restart xray 2>/dev/null

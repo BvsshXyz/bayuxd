@@ -112,7 +112,8 @@ with open('/etc/xray/config.json', 'w') as f:
     json.dump(d, f, indent=2)
 "
 
-sed -i "/\"email\": \"$user\"/i\\      #& $user $exp" /etc/xray/config.json 2>/dev/null || true
+# Jangan sisipkan komentar ke JSON agar config.json tetap valid!
+sed -i "/^#& $user /d" /etc/vless/.vless.db 2>/dev/null || true
 
 mkdir -p /etc/kyt/limit/vless/ip /etc/kyt/limit/vless/quota /etc/vless /etc/limit/vless
 if [[ "$iplimit" -gt 0 ]]; then
@@ -130,6 +131,7 @@ systemctl restart xray 2>/dev/null
 
 vless_link_tls="vless://${uuid}@${domain}:443?path=/vless&security=tls&encryption=none&type=ws&sni=${domain}#${user}"
 vless_link_nontls="vless://${uuid}@${domain}:80?path=/vless&security=none&encryption=none&type=ws&host=${domain}#${user}"
+vless_link_grpc="vless://${uuid}@${domain}:443?mode=gun&security=tls&encryption=none&type=grpc&serviceName=vless-grpc&sni=${domain}#${user}"
 
 mkdir -p /var/www/html
 cat << EOF > "/var/www/html/vless-${user}.txt"
@@ -153,6 +155,9 @@ ${vless_link_tls}
 ====================================================
 VLESS WS Non-TLS (Port 80):
 ${vless_link_nontls}
+====================================================
+VLESS gRPC (Port 443):
+${vless_link_grpc}
 ====================================================
 EOF
 
@@ -184,7 +189,14 @@ echo -e "${C_SUB}${vless_link_tls}${NC}"
 echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
 echo -e "${C_BORDER}│${C_HEAD} VLESS WS NON-TLS (PORT 80):                        ${C_BORDER}│${NC}"
 echo -e "${C_SUB}${vless_link_nontls}${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} VLESS GRPC TLS (PORT 443):                         ${C_BORDER}│${NC}"
+echo -e "${C_SUB}${vless_link_grpc}${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT}  Link Simpan Akun:                                  ${C_BORDER}│${NC}\n"
+printf "${C_BORDER}│${C_CYAN}  https://${domain}:81/vless-${user}.txt             ${C_BORDER}│${NC}\n"
 echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
 echo ""
-read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
-menu
+echo -ne "${C_TITLE}Tekan [ Enter ] untuk kembali ke menu...${NC}"
+read -r
+m-vless

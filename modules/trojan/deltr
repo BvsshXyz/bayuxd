@@ -80,7 +80,6 @@ for ib in d.get('inbounds', []):
 with open('/etc/xray/config.json', 'w') as f:
     json.dump(d, f, indent=2)
 "
-sed -i "/#! $target_user /d" /etc/xray/config.json 2>/dev/null || true
 sed -i "/#! $target_user /d" /etc/trojan/.trojan.db 2>/dev/null || true
 rm -f "/etc/kyt/limit/trojan/ip/$target_user" "/etc/trojan/$target_user" "/etc/limit/trojan/$target_user" "/var/www/html/trojan-$target_user.txt"
 systemctl restart xray 2>/dev/null

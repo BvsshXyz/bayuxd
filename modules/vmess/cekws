@@ -20,7 +20,7 @@ echo -e "${C_BORDER}├───────────────────
 echo -e "${C_BORDER}│${C_HEAD}  NO  USERNAME        LOGIN IP  LIMIT IP  STATUS    ${C_BORDER}│${NC}"
 echo -e "${C_BORDER}│ ────────────────────────────────────────────────── │${NC}"
 
-data=( $(grep -E "^### " "/etc/xray/config.json" 2>/dev/null | cut -d ' ' -f 2 | sort -u) )
+data=( $(grep -E "^### " "/etc/vmess/.vmess.db" 2>/dev/null | grep -v "admin@vmess" | cut -d ' ' -f 2 | sort -u) )
 
 count=0
 online=0

@@ -113,7 +113,8 @@ with open('/etc/xray/config.json', 'w') as f:
     json.dump(d, f, indent=2)
 "
 
-sed -i "/\"email\": \"$user\"/i\\      ### $user $exp" /etc/xray/config.json 2>/dev/null || true
+# Jangan sisipkan komentar ke JSON agar config.json tetap valid!
+sed -i "/^### $user /d" /etc/vmess/.vmess.db 2>/dev/null || true
 
 mkdir -p /etc/kyt/limit/vmess/ip /etc/kyt/limit/vmess/quota /etc/vmess /etc/limit/vmess
 if [[ "$iplimit" -gt 0 ]]; then
@@ -166,6 +167,24 @@ EOF
 vmess_link_tls="vmess://$(echo -n "$vmess_json_tls" | base64 -w 0)"
 vmess_link_nontls="vmess://$(echo -n "$vmess_json_nontls" | base64 -w 0)"
 
+vmess_json_grpc=$(cat <<EOF
+{
+  "v": "2",
+  "ps": "${user}",
+  "add": "${domain}",
+  "port": "443",
+  "id": "${uuid}",
+  "aid": "0",
+  "net": "grpc",
+  "path": "vmess-grpc",
+  "type": "none",
+  "host": "${domain}",
+  "tls": "tls"
+}
+EOF
+)
+vmess_link_grpc="vmess://$(echo -n "$vmess_json_grpc" | base64 -w 0)"
+
 mkdir -p /var/www/html
 cat << EOF > "/var/www/html/vmess-${user}.txt"
 ====================================================
@@ -188,6 +207,9 @@ ${vmess_link_tls}
 ====================================================
 VMess WS Non-TLS (Port 80):
 ${vmess_link_nontls}
+====================================================
+VMess gRPC (Port 443):
+${vmess_link_grpc}
 ====================================================
 EOF
 
@@ -219,7 +241,14 @@ echo -e "${C_SUB}${vmess_link_tls}${NC}"
 echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
 echo -e "${C_BORDER}│${C_HEAD} VMESS WS NON-TLS (PORT 80):                        ${C_BORDER}│${NC}"
 echo -e "${C_SUB}${vmess_link_nontls}${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} VMESS GRPC TLS (PORT 443):                         ${C_BORDER}│${NC}"
+echo -e "${C_SUB}${vmess_link_grpc}${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT}  Link Simpan Akun:                                  ${C_BORDER}│${NC}\n"
+printf "${C_BORDER}│${C_CYAN}  https://${domain}:81/vmess-${user}.txt             ${C_BORDER}│${NC}\n"
 echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
 echo ""
-read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
-menu
+echo -ne "${C_TITLE}Tekan [ Enter ] untuk kembali ke menu...${NC}"
+read -r
+m-vmess

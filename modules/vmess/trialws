@@ -43,19 +43,19 @@ with open('/etc/xray/config.json', 'w') as f:
     json.dump(d, f, indent=2)
 "
 
-exp_time=$(date -d "+30 minutes" +"%H:%M")
-exp_date=$(date -d "+30 minutes" +"%Y-%m-%d %H:%M")
-exp_show=$(date -d "+30 minutes" +"%d %b, %Y [%H:%M]")
+exp_time=$(date -d "+1 minutes" +"%H:%M")
+exp_date=$(date -d "+1 minutes" +"%Y-%m-%d %H:%M")
+exp_show=$(date -d "+1 minutes" +"%d %b, %Y [%H:%M]")
 
-sed -i "/\"email\": \"$user\"/i\\      ### $user $exp_date" /etc/xray/config.json 2>/dev/null || true
+# Jangan sisipkan komentar ke JSON agar config.json tetap valid!
 mkdir -p /etc/kyt/limit/vmess/ip /etc/vmess
 echo "1" > "/etc/kyt/limit/vmess/ip/$user"
 echo "### $user $exp_date $uuid 0 1" >> /etc/vmess/.vmess.db
 systemctl restart xray 2>/dev/null
 
-# Auto delete from Xray after 30 minutes via at daemon
-at_del="python3 -c \"import json; f='/etc/xray/config.json'; d=json.load(open(f)); [ib['settings'].__setitem__('clients', [c for c in ib.get('settings',{}).get('clients',[]) if c.get('email')!='$user']) for ib in d.get('inbounds',[]) if ib.get('protocol')=='vmess']; json.dump(d, open(f,'w'), indent=2)\"; sed -i '/### $user /d' /etc/xray/config.json; sed -i '/### $user /d' /etc/vmess/.vmess.db; rm -f /etc/kyt/limit/vmess/ip/$user; systemctl restart xray"
-echo "$at_del" | at now + 30 minutes &>/dev/null
+# Auto delete from Xray after 1 minute via at daemon (TES TRIAL 1 MENIT)
+at_del="python3 -c \"import json; f='/etc/xray/config.json'; d=json.load(open(f)); [ib['settings'].__setitem__('clients', [c for c in ib.get('settings',{}).get('clients',[]) if c.get('email')!='$user']) for ib in d.get('inbounds',[]) if ib.get('protocol')=='vmess']; json.dump(d, open(f,'w'), indent=2)\"; sed -i '/### $user /d' /etc/vmess/.vmess.db; rm -f /etc/kyt/limit/vmess/ip/$user /var/www/html/vmess-$user.txt; systemctl restart xray"
+echo "$at_del" | at now + 1 minutes &>/dev/null
 
 vmess_json_tls=$(cat <<EOF
 {
@@ -73,7 +73,64 @@ vmess_json_tls=$(cat <<EOF
 }
 EOF
 )
+vmess_json_nontls=$(cat <<EOF
+{
+  "v": "2",
+  "ps": "${user}",
+  "add": "${domain}",
+  "port": "80",
+  "id": "${uuid}",
+  "aid": "0",
+  "net": "ws",
+  "path": "/vmess",
+  "type": "none",
+  "host": "${domain}",
+  "tls": "none"
+}
+EOF
+)
+vmess_json_grpc=$(cat <<EOF
+{
+  "v": "2",
+  "ps": "${user}",
+  "add": "${domain}",
+  "port": "443",
+  "id": "${uuid}",
+  "aid": "0",
+  "net": "grpc",
+  "path": "vmess-grpc",
+  "type": "none",
+  "host": "${domain}",
+  "tls": "tls"
+}
+EOF
+)
 vmess_link_tls="vmess://$(echo -n "$vmess_json_tls" | base64 -w 0)"
+vmess_link_nontls="vmess://$(echo -n "$vmess_json_nontls" | base64 -w 0)"
+vmess_link_grpc="vmess://$(echo -n "$vmess_json_grpc" | base64 -w 0)"
+
+mkdir -p /var/www/html
+cat << EOF > "/var/www/html/vmess-${user}.txt"
+====================================================
+          TRIAL VMESS ACCOUNT INFORMATION
+====================================================
+Username     : ${user}
+Domain       : ${domain}
+Port TLS     : 443
+Port Non-TLS : 80, 8080
+UUID         : ${uuid}
+Expired On   : ${exp_show}
+====================================================
+VMess WS TLS (Port 443):
+${vmess_link_tls}
+====================================================
+VMess WS Non-TLS (Port 80):
+${vmess_link_nontls}
+====================================================
+VMess gRPC (Port 443):
+${vmess_link_grpc}
+====================================================
+EOF
 
 clear
 echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
@@ -82,15 +139,24 @@ echo -e "${C_BORDER}├───────────────────
 printf "${C_BORDER}│${C_TEXT} Username    : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "$user"
 printf "${C_BORDER}│${C_TEXT} Domain      : ${C_TITLE}%-37s${C_BORDER}│${NC}\n" "$domain"
 printf "${C_BORDER}│${C_TEXT} Port TLS    : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "443"
+printf "${C_BORDER}│${C_TEXT} Port Non-TLS: ${C_VAL}%-37s${C_BORDER}│${NC}\n" "80, 8080"
 printf "${C_BORDER}│${C_TEXT} UUID        : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "$uuid"
-printf "${C_BORDER}│${C_TEXT} Network     : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "WebSocket (/vmess)"
+printf "${C_BORDER}│${C_TEXT} Network     : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "WS (/vmess) & gRPC"
 printf "${C_BORDER}│${C_TEXT} Limit IP    : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "1 Device (Trial)"
-printf "${C_BORDER}│${C_TEXT} Masa Aktif  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "30 Menit [$exp_time]"
+printf "${C_BORDER}│${C_TEXT} Masa Aktif  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "1 Menit [$exp_time]"
 printf "${C_BORDER}│${C_TEXT} Expired On  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "$exp_show"
 echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
 echo -e "${C_BORDER}│${C_HEAD} VMESS WS TLS (PORT 443):                           ${C_BORDER}│${NC}"
+echo -e "${C_SUB}${vmess_link_tls}${NC}"
 echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
-print_boxed_content "$vmess_link_tls"
+echo -e "${C_BORDER}│${C_HEAD} VMESS WS NON-TLS (PORT 80):                        ${C_BORDER}│${NC}"
+echo -e "${C_SUB}${vmess_link_nontls}${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD} VMESS GRPC TLS (PORT 443):                         ${C_BORDER}│${NC}"
+echo -e "${C_SUB}${vmess_link_grpc}${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+printf "${C_BORDER}│${C_TEXT}  Link Simpan Akun:                                  ${C_BORDER}│${NC}\n"
+printf "${C_BORDER}│${C_CYAN}  https://${domain}:81/vmess-${user}.txt             ${C_BORDER}│${NC}\n"
 echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
 echo ""
 echo -ne "${C_TITLE}Tekan [ Enter ] untuk kembali ke menu...${NC}"

@@ -1,150 +1,139 @@
 #!/bin/bash
-clear
+# ====================================================
+#   BAYU XD TUNNELING SYSTEM - USER DETAIL VLESS
+#   54-Column Modern Auto-Listing & Quick Number Pick
+# ====================================================
 
-PUB=$(cat /etc/slowdns/server.pub)
-NS=$(cat /etc/xray/dns)
-CITY=$(cat /etc/xray/city)
+C_BORDER="\033[1;36m"
+C_HEAD="\033[1;37m"
+C_TEXT="\033[0;37m"
+C_VAL="\033[1;32m"
+C_OFF="\033[1;31m"
+C_NUM="\033[1;33m"
+C_CYAN="\033[0;36m"
+C_TITLE="\033[1;38;5;51m"
+NC="\033[0m"
+
 clear
-NUMBER_OF_CLIENTS=$(grep -c -E "^#& " "/etc/xray/config.json")
-        if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e " \e[1;97;101m                CONFIG VLESS ACCOUNT                   \e[0m"
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo ""
-    echo "You have no existing clients!"
-    echo ""
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    read -n 1 -s -r -p "Press [ Enter ] to back on menu vless"
-    vless
+echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+echo -e "${C_BORDER}│${C_HEAD}             DETAIL USER ACCOUNT VLESS              ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD}  NO  USERNAME        EXPIRED DATE      STATUS      ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│ ────────────────────────────────────────────────── │${NC}"
+
+user_list=()
+exp_list=()
+uuid_list=()
+quota_list=()
+limit_list=()
+
+domain=$(cat /etc/xray/domain 2>/dev/null || cat /root/domain 2>/dev/null || echo "vpn.bayuuvx.com")
+
+count=0
+while read -r line; do
+    [[ -z "$line" ]] && continue
+    read -r _pfx u_name u_exp_d u_exp_t u_uuid u_quota u_lim <<< "$line"
+    [[ -z "$u_name" || "$u_name" == "admin@vless" ]] && continue
+    
+    if [[ "$u_exp_t" == *":"* ]]; then
+        u_exp="${u_exp_d} [${u_exp_t}]"
+    else
+        u_exp="$u_exp_d"
+        u_uuid="$u_exp_t"
+        u_quota="$u_uuid"
+        u_lim="$u_quota"
+    fi
+    
+    [[ -z "$u_lim" || "$u_lim" -le 0 ]] && u_lim_str="No Limit" || u_lim_str="${u_lim} IP"
+    [[ -z "$u_quota" || "$u_quota" -le 0 ]] && u_q_str="No Limit" || u_q_str="${u_quota} GB"
+    
+    ((count++))
+    num_str=$(printf "%02d" "$count")
+    user_list+=("$u_name")
+    exp_list+=("$u_exp")
+    uuid_list+=("$u_uuid")
+    quota_list+=("$u_q_str")
+    limit_list+=("$u_lim_str")
+    
+    printf "${C_BORDER}│${NC}  ${C_NUM}%-4s${NC}${C_TEXT}%-16s${NC}${C_CYAN}%-18s${NC}${C_VAL}%-10s${NC}  ${C_BORDER}│${NC}\n" \
+        "$num_str" "${u_name:0:16}" "${u_exp:0:18}" "ACTIVE"
+done < <(grep -E "^#& " /etc/vless/.vless.db 2>/dev/null)
+
+if [ "$count" -eq 0 ]; then
+    echo -e "${C_BORDER}│${C_VAL}            TIDAK ADA DATA USER VLESS               ${C_BORDER}│${NC}"
 fi
 
-  echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-  echo -e "  \e[1;97;101m        CONFIG VLESS ACCOUNT         \E[0m"
-  echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-        echo "     No  Expired   User"
-        grep -E "^#& " "/etc/xray/config.json" | cut -d ' ' -f 2-3 | nl -s ') '
-        until [[ ${CLIENT_NUMBER} -ge 1 && ${CLIENT_NUMBER} -le ${NUMBER_OF_CLIENTS} ]]; do
-                if [[ ${CLIENT_NUMBER} == '1' ]]; then
-                        read -rp "Select one client [1]: " CLIENT_NUMBER
-                else
-                        read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
-                fi
-        done
-user=$(grep -E "^#& " "/etc/xray/config.json" | cut -d ' ' -f 2 | sed -n "${CLIENT_NUMBER}"p)
-domain=$(cat /etc/xray/domain)
-iplim=$(cat /etc/kyt/limit/vless/ip/$user)
-Quota=$(cat /etc/vless/$user)
-uuid=$(grep -E "^### " "/etc/vless/.vless.db" | cut -d ' ' -f 4 | sed -n "${CLIENT_NUMBER}"p)
-Quota=$(grep -E "^### " "/etc/vless/.vless.db" | cut -d ' ' -f 5 | sed -n "${CLIENT_NUMBER}"p)
-exp=$(grep -E "^#& " "/etc/xray/config.json" | cut -d ' ' -f 3 | sed -n "${CLIENT_NUMBER}"p)
-hariini=`date -d "0 days" +"%Y-%m-%d"`
-cat >/var/www/html/vless-$user.txt <<-END
+echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+echo ""
 
-◇━━━━━━━━━━━━━━━━━◇
-  Dragon Emperor Tunneling 
-◇━━━━━━━━━━━━━━━━━◇
-# Format Vless WS TLS
+if [ "$count" -eq 0 ]; then
+    echo -ne "${C_CYAN}Tekan [ Enter ] untuk kembali ke menu VLESS...${NC}"
+    read -r
+    m-vless
+    exit 0
+fi
 
-- name: Vless-$user-WS TLS
-  server: ${domain}
-  port: 443
-  type: vless
-  uuid: ${uuid}
-  cipher: auto
-  tls: true
-  skip-cert-verify: true
-  servername: ${domain}
-  network: ws
-  ws-opts:
-    path: /vless
-    headers:
-      Host: ${domain}
+echo -ne "${C_TITLE}» Pilih Nomor [01-${count}] atau Ketik Username [00: Batal]: ${C_VAL}"
+read -r choice
 
-# Format Vless WS Non TLS
+if [[ "$choice" == "00" || "$choice" == "0" || -z "$choice" || "$choice" == "x" || "$choice" == "q" ]]; then
+    m-vless
+    exit 0
+fi
 
-- name: Vless-$user-WS (CDN) Non TLS
-  server: ${domain}
-  port: 80
-  type: vless
-  uuid: ${uuid}
-  cipher: auto
-  tls: false
-  skip-cert-verify: false
-  servername: ${domain}
-  network: ws
-  ws-opts:
-    path: /vless
-    headers:
-      Host: ${domain}
-  udp: true
+target_user=""
+target_idx=-1
+if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "$count" ]; then
+    target_idx=$(( choice - 1 ))
+    target_user="${user_list[$target_idx]}"
+else
+    for (( i=0; i<count; i++ )); do
+        if [ "${user_list[$i]}" = "$choice" ]; then
+            target_idx=$i
+            target_user="$choice"
+            break
+        fi
+    done
+fi
 
-# Format Vless gRPC (SNI)
+if [ "$target_idx" -ge 0 ]; then
+    u_user="${user_list[$target_idx]}"
+    u_exp="${exp_list[$target_idx]}"
+    u_uuid="${uuid_list[$target_idx]}"
+    u_q="${quota_list[$target_idx]}"
+    u_lim="${limit_list[$target_idx]}"
+    
+    ip_count=$(grep -w "$u_user" /var/log/xray/access.log 2>/dev/null | tail -n 500 | cut -d " " -f 3 | sed 's/tcp://g' | cut -d ":" -f 1 | sort -u | grep -vE "^$|^127\.0\.0\.1$" | wc -l)
+    if [ "$ip_count" -gt 0 ]; then
+        online_str="Online ($ip_count IP)"
+        c_on="${C_VAL}"
+    else
+        online_str="Offline"
+        c_on="${C_OFF}"
+    fi
+    
+    link_save="https://${domain}:81/vless-${u_user}.txt"
+    
+    clear
+    echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
+    echo -e "${C_BORDER}│${C_HEAD}              DETAIL AKUN XRAY VLESS                ${C_BORDER}│${NC}"
+    echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+    printf "${C_BORDER}│${C_TEXT}  Username           : ${C_VAL}%-29s${C_BORDER}│${NC}\n" "${u_user:0:29}"
+    printf "${C_BORDER}│${C_TEXT}  UUID / ID          : ${C_CYAN}%-29s${C_BORDER}│${NC}\n" "${u_uuid:0:29}"
+    printf "${C_BORDER}│${C_TEXT}  Status Login       : ${c_on}%-29s${C_BORDER}│${NC}\n" "$online_str"
+    printf "${C_BORDER}│${C_TEXT}  Max Limit IP       : ${C_VAL}%-29s${C_BORDER}│${NC}\n" "$u_lim"
+    printf "${C_BORDER}│${C_TEXT}  Max Kuota Data     : ${C_VAL}%-29s${C_BORDER}│${NC}\n" "$u_q"
+    printf "${C_BORDER}│${C_TEXT}  Expired Date       : ${C_NUM}%-29s${C_BORDER}│${NC}\n" "${u_exp:0:29}"
+    echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+    printf "${C_BORDER}│${C_TEXT}  Web Save Link:                                     ${C_BORDER}│${NC}\n"
+    printf "${C_BORDER}│${C_CYAN}  %-50s ${C_BORDER}│${NC}\n" "${link_save:0:50}"
+    echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+else
+    echo -e "\n${C_OFF}[!] Akun '$choice' tidak ditemukan!${NC}"
+fi
 
-- name: Vless-$user-gRPC (SNI)
-  server: ${domain}
-  port: 443
-  type: vless
-  uuid: ${uuid}
-  cipher: auto
-  tls: true
-  skip-cert-verify: true
-  servername: ${domain}
-  network: grpc
-  grpc-opts:
-  grpc-mode: gun
-    grpc-service-name: vless-grpc
-
-◇━━━━━━━━━━━━━━━━━◇
-Link Akun Vless 
-◇━━━━━━━━━━━━━━━━━◇
-Link TLS      : 
-${vlesslink1}
-◇━━━━━━━━━━━━━━━━━◇
-Link none TLS : 
-${vlesslink2}
-◇━━━━━━━━━━━━━━━━━◇
-Link GRPC     : 
-${vlesslink3}
-◇━━━━━━━━━━━━━━━━━◇
-vlesslink1="vless://${uuid}@${domain}:443?path=/vless&security=tls&encryption=none&type=ws#${user}"
-vlesslink2="vless://${uuid}@${domain}:80?path=/vless&encryption=none&type=ws#${user}"
-vlesslink3="vless://${uuid}@${domain}:443?mode=gun&security=tls&encryption=none&type=grpc&serviceName=vless-grpc&sni=${domain}#${user}"
-clear
-echo -e ""
-echo -e "\033[1;93m====================\033[0m"
-echo -e " CREATE VLESS ACCOUNT           "
-echo -e "\033[1;93m====================\033[0m"
-echo -e "Remarks     : ${user}"
-echo -e "Domain      : ${domain}"
-echo -e "Host XrayDNS: ${NS}"
-echo -e "Pub Key     : ${PUB}"
-echo -e "User Quota  : ${Quota} GB"
-echo -e "Limit IP    : ${iplim} IP"
-echo -e "port TLS    : 443"
-echo -e "Port NTLS   : 80, 8080, 8081-9999"
-echo -e "port Grpc   : 443"
-echo -e "port OpenClash TLS: 443"
-echo -e "port OpenClash NTLS: 80, 8080, 8081-9999"
-echo -e "port CDN TLS : 443"
-echo -e "port CDN NTLS: 80, 8080, 8081-9999"
-echo -e "port CDN Grpc: 443"
-echo -e "User ID     : ${uuid}"
-echo -e "Encryption  : none"
-echo -e "Path TLS    : /vless "
-echo -e "ServiceName : vless-grpc"
-echo -e "\033[1;93m====================\033[0m"
-echo -e "Link TLS    : ${vlesslink1}"
-echo -e "\033[1;93m====================\033[0m"
-echo -e "Link NTLS   : ${vlesslink2}"
-echo -e "\033[1;93m====================\033[0m"
-echo -e "Link GRPC   : ${vlesslink3}"
-echo -e "\033[1;93m====================\033[0m"
-echo -e "Link Format Openclash   : https://${domain}:81/vless-$user.txt"
-echo -e "\033[1;93m====================\033[0m"
-echo -e "Link Via Qris  :https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${vlesslink1}"
-echo -e "\033[1;93m====================\033[0m"
-echo -e "Expired    : $exp"
-echo -e "\033[1;93m====================\033[0m"
-echo -e ""
-read -n 1 -s -r -p "Press [ Enter ] to back on menu"
-menu
+echo ""
+echo -ne "${C_CYAN}Tekan [ Enter ] untuk kembali ke menu VLESS...${NC}"
+read -r
+m-vless
+exit 0

@@ -103,12 +103,11 @@ rem = int((new_t - datetime.datetime.now()).total_seconds() / 60)
 if rem < 1: rem = 1
 print(new_t.strftime('%Y-%m-%d %H:%M'), new_t.strftime('%H:%M'), rem)
 ")
-sed -i "/### $target_user /d" /etc/xray/config.json 2>/dev/null || true
+# Perbarui database lokal (tanpa merusak JSON dengan komentar)
 sed -i "/### $target_user /d" /etc/vmess/.vmess.db 2>/dev/null || true
-sed -i "/\"email\": \"$target_user\"/i\\      ### $target_user $new_exp_iso" /etc/xray/config.json 2>/dev/null || true
 echo "### $target_user $new_exp_iso x 0 1" >> /etc/vmess/.vmess.db
 systemctl restart xray 2>/dev/null
-at_del="python3 -c \"import json; f='/etc/xray/config.json'; d=json.load(open(f)); [ib['settings'].__setitem__('clients', [c for c in ib.get('settings',{}).get('clients',[]) if c.get('email')!='$target_user']) for ib in d.get('inbounds',[]) if ib.get('protocol')=='vmess']; json.dump(d, open(f,'w'), indent=2)\"; sed -i '/### $target_user /d' /etc/xray/config.json; sed -i '/### $target_user /d' /etc/vmess/.vmess.db; rm -f /etc/kyt/limit/vmess/ip/$target_user; systemctl restart xray"
+at_del="python3 -c \"import json; f='/etc/xray/config.json'; d=json.load(open(f)); [ib['settings'].__setitem__('clients', [c for c in ib.get('settings',{}).get('clients',[]) if c.get('email')!='$target_user']) for ib in d.get('inbounds',[]) if ib.get('protocol')=='vmess']; json.dump(d, open(f,'w'), indent=2)\"; sed -i '/### $target_user /d' /etc/vmess/.vmess.db; rm -f /etc/kyt/limit/vmess/ip/$target_user /var/www/html/vmess-$target_user.txt; systemctl restart xray"
 echo "$at_del" | at now + ${remaining_mins} minutes &>/dev/null
 
     echo -e "\n${C_ON}[✓] Akun TRIAL VMess Nomor [$opt] ($target_user) berhasil diperpanjang +${Mins} Menit! (Expired: $new_exp_show)${NC}"
@@ -150,9 +149,7 @@ else:
 new = base + datetime.timedelta(days=$Days)
 print(new.strftime('%Y-%m-%d %H:%M'), new.strftime('%d %b, %Y [%H:%M]'))
 ")
-sed -i "/### $target_user /d" /etc/xray/config.json 2>/dev/null || true
 sed -i "/### $target_user /d" /etc/vmess/.vmess.db 2>/dev/null || true
-sed -i "/\"email\": \"$target_user\"/i\\      ### $target_user $new_date_iso" /etc/xray/config.json 2>/dev/null || true
 echo "### $target_user $new_date_iso x 0 1" >> /etc/vmess/.vmess.db
 systemctl restart xray 2>/dev/null
 
