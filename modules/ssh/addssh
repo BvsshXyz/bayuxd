@@ -98,7 +98,7 @@ isp=$(cat /etc/xray/isp 2>/dev/null || echo "DigitalOcean, LLC")
 tgl_create=$(date +"%d %b, %Y [%H:%M]")
 expe=$(date -d "$masaaktif days" +"%d %b, %Y [%H:%M]")
 exp_date=$(date -d "$masaaktif days" +"%Y-%m-%d %H:%M")
-exp_chage=$(date -d "$masaaktif days + 1 day" +"%Y-%m-%d")
+exp_chage=$(date -d "$masaaktif days" +"%Y-%m-%d")
 
 useradd -e "$exp_chage" -s /bin/false -M "$Login" 2>/dev/null
 echo -e "$Pass\n$Pass" | passwd "$Login" &>/dev/null

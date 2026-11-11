@@ -92,7 +92,10 @@ for u in "${users_ssh[@]}"; do
     if [[ "$u" =~ ^trial ]]; then
         continue
     fi
-    exp_raw=$(grep -wE "^#ssh# $u" /etc/ssh/.ssh.db 2>/dev/null | awk '{print $3, $4}')
+    exp_raw=$(grep -wE "^### $u" /etc/ssh/.ssh.db 2>/dev/null | awk '{print $3, $4}')
+    if [ -z "$exp_raw" ]; then
+        exp_raw=$(grep -wE "^#ssh# $u" /etc/ssh/.ssh.db 2>/dev/null | awk '{print $3, $4}')
+    fi
     if [ -n "$exp_raw" ]; then
         exp_epoch=$(python3 -c "
 import datetime
@@ -105,9 +108,11 @@ except Exception:
         print(0)
 ")
         if [ "$now_epoch" -ge "$exp_epoch" ] && [ "$exp_epoch" -gt 0 ]; then
+            pkill -u "$u" 2>/dev/null || true
             userdel -f -r "$u" 2>/dev/null || userdel -f "$u" 2>/dev/null
-            sed -i "/\\b${u}\\b/d" /etc/ssh/.ssh.db 2>/dev/null
-            rm -f "/etc/kyt/limit/ssh/ip/$u" "/var/www/html/ssh-$u.txt"
+            sed -i "/\b${u}\b/d" /etc/ssh/.ssh.db 2>/dev/null
+            rm -f "/etc/kyt/limit/ssh/ip/$u" "/var/www/html/ssh-$u.txt" "/etc/kyt/limit/ssh/locked/$u"
+            echo "Auto-removed expired SSH user: $u (expired at $exp_raw)" >> /var/log/xp.log
         fi
     fi
 done
