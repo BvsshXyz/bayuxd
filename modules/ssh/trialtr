@@ -42,9 +42,9 @@ with open('/etc/xray/config.json', 'w') as f:
     json.dump(d, f, indent=2)
 "
 
-exp_time=$(date -d "+1 minutes" +"%H:%M")
-exp_date=$(date -d "+1 minutes" +"%Y-%m-%d %H:%M")
-exp_show=$(date -d "+1 minutes" +"%d %b, %Y [%H:%M]")
+exp_time=$(date -d "+30 minutes" +"%H:%M")
+exp_date=$(date -d "+30 minutes" +"%Y-%m-%d %H:%M")
+exp_show=$(date -d "+30 minutes" +"%d %b, %Y [%H:%M]")
 
 # Jangan sisipkan komentar ke JSON agar config.json tetap valid!
 mkdir -p /etc/kyt/limit/trojan/ip /etc/trojan
@@ -53,7 +53,7 @@ echo "#! $user $exp_date $uuid 0 1" >> /etc/trojan/.trojan.db
 systemctl restart xray 2>/dev/null
 
 at_del="python3 -c \"import json; f='/etc/xray/config.json'; d=json.load(open(f)); [ib['settings'].__setitem__('clients', [c for c in ib.get('settings',{}).get('clients',[]) if c.get('email')!='$user']) for ib in d.get('inbounds',[]) if ib.get('protocol')=='trojan']; json.dump(d, open(f,'w'), indent=2)\"; sed -i '/#! $user /d' /etc/trojan/.trojan.db; rm -f /etc/kyt/limit/trojan/ip/$user /var/www/html/trojan-$user.txt; systemctl restart xray"
-echo "$at_del" | at now + 1 minutes &>/dev/null
+echo "$at_del" | at now + 30 minutes &>/dev/null
 
 trojan_link="trojan://${uuid}@${domain}:443?path=%2Ftrojan&security=tls&host=${domain}&type=ws&sni=${domain}#${user}"
 trojan_link_nontls="trojan://${uuid}@${domain}:80?path=%2Ftrojan&security=none&host=${domain}&type=ws#${user}"
@@ -93,7 +93,7 @@ printf "${C_BORDER}│${C_TEXT} Port Non-TLS: ${C_VAL}%-37s${C_BORDER}│${NC}\n
 printf "${C_BORDER}│${C_TEXT} Password    : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "$uuid"
 printf "${C_BORDER}│${C_TEXT} Network     : ${C_VAL}%-37s${C_BORDER}│${NC}\n" "WS (/trojan) & gRPC"
 printf "${C_BORDER}│${C_TEXT} Limit IP    : ${C_GOLD}%-37s${C_BORDER}│${NC}\n" "1 Device (Trial)"
-printf "${C_BORDER}│${C_TEXT} Masa Aktif  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "1 Menit [$exp_time]"
+printf "${C_BORDER}│${C_TEXT} Masa Aktif  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "30 Menit [$exp_time]"
 printf "${C_BORDER}│${C_TEXT} Expired On  : ${C_ON}%-37s${C_BORDER}│${NC}\n" "$exp_show"
 echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
 echo -e "${C_BORDER}│${C_HEAD} TROJAN WS TLS (PORT 443):                           ${C_BORDER}│${NC}"
