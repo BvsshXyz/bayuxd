@@ -23,7 +23,7 @@ mkdir -p "$LIMIT_DIR"
 
 clear
 echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
-printf "${C_BORDER}│${C_HEAD}              EDIT LIMIT IP USER - %-16s${C_BORDER}│${NC}\n" "$PROTO_UPPER"
+printf "${C_BORDER}│${C_HEAD}              EDIT LIMIT IP USER - %-17s${C_BORDER}│${NC}\n" "$PROTO_UPPER"
 echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
 echo -e "${C_BORDER}│${C_HEAD}  NO  USERNAME        LIMIT IP    STATUS            ${C_BORDER}│${NC}"
 echo -e "${C_BORDER}│ ────────────────────────────────────────────────── │${NC}"
@@ -83,7 +83,7 @@ fi
 
 total=${#user_list[@]}
 if [ "$total" -eq 0 ]; then
-    printf "${C_BORDER}│${C_VAL}            TIDAK ADA AKUN %-10s TERDAFTAR           ${C_BORDER}│${NC}\n" "$PROTO_UPPER"
+    echo -e "${C_BORDER}│${C_VAL}            TIDAK ADA AKUN TERDAFTAR                ${C_BORDER}│${NC}"
 else
     for (( i=0; i<total; i++ )); do
         num_str=$(printf "%02d" $((i + 1)))
