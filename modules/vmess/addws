@@ -51,7 +51,7 @@ while true; do
         echo -e "${C_OFF}[!] Hanya huruf, angka, dan underscore (_)!${NC}\n"
         continue
     fi
-    EXISTS=$(grep -w "$user" /etc/xray/config.json 2>/dev/null | wc -l)
+    EXISTS=$(grep -wE "^### $user " /etc/vmess/.vmess.db 2>/dev/null | wc -l)
     if [[ "$EXISTS" -gt 0 ]]; then
         echo -e "${C_OFF}[!] Akun '$user' sudah terdaftar, pilih nama lain!${NC}\n"
         continue
