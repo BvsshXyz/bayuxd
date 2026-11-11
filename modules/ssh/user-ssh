@@ -1,7 +1,7 @@
 #!/bin/bash
 # ====================================================
 #   BAYU XD TUNNELING SYSTEM - USER DETAIL SSH/OVPN
-#   Precise 54-Column Modern Card Layout
+#   54-Column Modern Auto-Listing & Quick Number Pick
 # ====================================================
 
 C_BORDER="\033[1;36m"
@@ -11,60 +11,139 @@ C_VAL="\033[1;32m"
 C_OFF="\033[1;31m"
 C_NUM="\033[1;33m"
 C_CYAN="\033[0;36m"
+C_TITLE="\033[1;38;5;51m"
 NC="\033[0m"
 
 clear
 echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
 echo -e "${C_BORDER}│${C_HEAD}              DETAIL USER ACCOUNT SSH               ${C_BORDER}│${NC}"
-echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+echo -e "${C_BORDER}│${C_HEAD}  NO  USERNAME        EXPIRED DATE      STATUS      ${C_BORDER}│${NC}"
+echo -e "${C_BORDER}│ ────────────────────────────────────────────────── │${NC}"
+
+user_list=()
+pass_list=()
+exp_list=()
+limit_list=()
+status_list=()
+
+domain=$(cat /etc/xray/domain 2>/dev/null || cat /root/domain 2>/dev/null || echo "localhost")
 
 count=0
-
 while read -r line; do
     [[ -z "$line" ]] && continue
-    # Format line: ### user exp pass limit
-    user=$(echo "$line" | awk '{print $2}')
-    exp=$(echo "$line" | awk '{print $3}')
-    pass=$(echo "$line" | awk '{print $4}')
-    limit=$(echo "$line" | awk '{print $5}')
+    read -r _pfx u_name col3 col4 col5 col6 <<< "$line"
+    [[ -z "$u_name" ]] && continue
     
-    [[ -z "$user" ]] && continue
+    if [[ "$col4" == *":"* ]]; then
+        u_exp="${col3} [${col4}]"
+        u_pass="$col5"
+        u_lim="$col6"
+    else
+        u_exp="$col3"
+        u_pass="$col4"
+        u_lim="$col5"
+    fi
+    
+    [[ -z "$u_lim" || "$u_lim" -le 0 ]] && u_lim="No Limit" || u_lim="${u_lim} IP"
+    
+    st="ACTIVE"
+    if passwd -S "$u_name" 2>/dev/null | grep -q " L "; then
+        st="LOCKED"
+    fi
+    
     ((count++))
     num_str=$(printf "%02d" "$count")
+    user_list+=("$u_name")
+    pass_list+=("$u_pass")
+    exp_list+=("$u_exp")
+    limit_list+=("$u_lim")
+    status_list+=("$st")
     
-    # Cek status lock / aktif
-    if passwd -S "$user" 2>/dev/null | grep -q "L"; then
-        status_tag="${C_OFF}LOCKED${NC}"
-    else
-        status_tag="${C_VAL}ACTIVE${NC}"
-    fi
+    c_st="${C_VAL}"
+    [ "$st" = "LOCKED" ] && c_st="${C_OFF}"
     
-    # Cek live online
-    active_login=$(pgrep -u "$user" 2>/dev/null | wc -l)
-    if [ "$active_login" -gt 0 ]; then
-        online_str="${C_VAL}Online ($active_login Proc)${NC}"
-    else
-        online_str="${C_OFF}Offline${NC}"
-    fi
-    
-    [[ -z "$limit" || "$limit" == "0" ]] && limit_str="No Limit" || limit_str="${limit} IP"
-
-    echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
-    printf "${C_BORDER}│${C_NUM} [%s]${C_TEXT} Username : ${C_VAL}%-18s${C_TEXT} Status: %-14b${C_BORDER}│${NC}\n" \
-        "$num_str" "${user:0:18}" "$status_tag"
-    echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
-    printf "${C_BORDER}│${C_TEXT} Password       : ${C_CYAN}%-33s${C_BORDER}│${NC}\n" "${pass:0:33}"
-    printf "${C_BORDER}│${C_TEXT} Max Limit IP   : ${C_VAL}%-33s${C_BORDER}│${NC}\n" "$limit_str"
-    printf "${C_BORDER}│${C_TEXT} Status Login   : %-42b${C_BORDER}│${NC}\n" "$online_str"
-    printf "${C_BORDER}│${C_TEXT} Expired Date   : ${C_NUM}%-33s${C_BORDER}│${NC}\n" "$exp"
-    echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+    printf "${C_BORDER}│${NC}  ${C_NUM}%-4s${NC}${C_TEXT}%-16s${NC}${C_CYAN}%-18s${NC}${c_st}%-10s${NC}  ${C_BORDER}│${NC}\n" \
+        "$num_str" "${u_name:0:16}" "${u_exp:0:18}" "$st"
 done < <(grep -E "^### " /etc/ssh/.ssh.db 2>/dev/null)
 
 if [ "$count" -eq 0 ]; then
+    echo -e "${C_BORDER}│${C_VAL}            TIDAK ADA DATA USER SSH                 ${C_BORDER}│${NC}"
+fi
+
+echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+echo ""
+
+if [ "$count" -eq 0 ]; then
+    echo -ne "${C_CYAN}Tekan [ Enter ] untuk kembali ke menu...${NC}"
+    read -r
+    exit 0
+fi
+
+echo -ne "${C_TITLE}» Pilih Nomor [01-${count}] atau Ketik Username [00: Batal]: ${C_VAL}"
+read -r choice
+
+if [[ "$choice" == "00" || "$choice" == "0" || -z "$choice" || "$choice" == "x" || "$choice" == "q" ]]; then
+    exit 0
+fi
+
+target_user=""
+target_idx=-1
+if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "$count" ]; then
+    target_idx=$(( choice - 1 ))
+    target_user="${user_list[$target_idx]}"
+else
+    for (( i=0; i<count; i++ )); do
+        if [ "${user_list[$i]}" = "$choice" ]; then
+            target_idx=$i
+            target_user="$choice"
+            break
+        fi
+    done
+fi
+
+if [ "$target_idx" -ge 0 ]; then
+    u_user="${user_list[$target_idx]}"
+    u_pass="${pass_list[$target_idx]}"
+    u_exp="${exp_list[$target_idx]}"
+    u_lim="${limit_list[$target_idx]}"
+    u_st="${status_list[$target_idx]}"
+    
+    # Cek live online
+    active_login=$(pgrep -u "$u_user" 2>/dev/null | wc -l)
+    if [ "$active_login" -gt 0 ]; then
+        online_str="Online ($active_login Sesi)"
+        c_on="${C_VAL}"
+    else
+        online_str="Offline"
+        c_on="${C_OFF}"
+    fi
+    
+    link_save="https://${domain}:81/ssh-${u_user}.txt"
+    
+    clear
     echo -e "${C_BORDER}┌────────────────────────────────────────────────────┐${NC}"
-    echo -e "${C_BORDER}│${C_OFF}             TIDAK ADA DATA USER SSH                ${C_BORDER}│${NC}"
+    echo -e "${C_BORDER}│${C_HEAD}              DETAIL AKUN SSH & WEBSOCKET           ${C_BORDER}│${NC}"
+    echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+    printf "${C_BORDER}│${C_TEXT}  Username           : ${C_VAL}%-29s${C_BORDER}│${NC}\n" "${u_user:0:29}"
+    printf "${C_BORDER}│${C_TEXT}  Password           : ${C_CYAN}%-29s${C_BORDER}│${NC}\n" "${u_pass:0:29}"
+    if [ "$u_st" = "LOCKED" ]; then
+        printf "${C_BORDER}│${C_TEXT}  Status Akun        : ${C_OFF}%-29s${C_BORDER}│${NC}\n" "LOCKED (Login Diblokir)"
+    else
+        printf "${C_BORDER}│${C_TEXT}  Status Akun        : ${C_VAL}%-29s${C_BORDER}│${NC}\n" "ACTIVE (Normal)"
+    fi
+    printf "${C_BORDER}│${C_TEXT}  Status Login       : ${c_on}%-29s${C_BORDER}│${NC}\n" "$online_str"
+    printf "${C_BORDER}│${C_TEXT}  Max Limit IP       : ${C_VAL}%-29s${C_BORDER}│${NC}\n" "$u_lim"
+    printf "${C_BORDER}│${C_TEXT}  Expired Date       : ${C_NUM}%-29s${C_BORDER}│${NC}\n" "${u_exp:0:29}"
+    echo -e "${C_BORDER}├────────────────────────────────────────────────────┤${NC}"
+    printf "${C_BORDER}│${C_TEXT}  Web Save Link:                                     ${C_BORDER}│${NC}\n"
+    printf "${C_BORDER}│${C_CYAN}  %-50s ${C_BORDER}│${NC}\n" "${link_save:0:50}"
     echo -e "${C_BORDER}└────────────────────────────────────────────────────┘${NC}"
+else
+    echo -e "\n${C_OFF}[!] Akun '$choice' tidak ditemukan!${NC}"
 fi
 
 echo ""
-read -n 1 -s -r -p "Tekan [ Enter ] untuk kembali ke menu..."
+echo -ne "${C_CYAN}Tekan [ Enter ] untuk kembali ke menu SSH...${NC}"
+read -r
+exit 0
