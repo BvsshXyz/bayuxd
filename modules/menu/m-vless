@@ -40,5 +40,6 @@ case "$opt" in
     8|08) ganti-quota vless ; m-vless ;;
     9|09) delexp vless ; m-vless ;;
     0|00|x|q) menu ;;
-    *) m-vless ;;
+    "") menu ;;
+    *) echo -e "${C_OFF}[!] Opsi salah!${NC}" ; sleep 1 ; m-vless ;;
 esac

@@ -40,5 +40,6 @@ case "$opt" in
     8|08) ganti-quota trojan ; m-trojan ;;
     9|09) delexp trojan ; m-trojan ;;
     0|00|x|q) menu ;;
-    *) m-trojan ;;
+    "") menu ;;
+    *) echo -e "${C_OFF}[!] Opsi salah!${NC}" ; sleep 1 ; m-trojan ;;
 esac
