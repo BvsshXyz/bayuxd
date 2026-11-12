@@ -22,11 +22,13 @@ users=($(python3 -c "
 import json
 with open('/etc/xray/config.json') as f:
     d = json.load(f)
+seen = set()
 for ib in d.get('inbounds', []):
     if ib.get('protocol') == 'vless':
         for c in ib.get('settings', {}).get('clients', []):
             email = c.get('email', '')
-            if email and email != 'admin@vless':
+            if email and not email.startswith('admin@') and email not in seen:
+                seen.add(email)
                 print(email)
 "))
 total_user=${#users[@]}
